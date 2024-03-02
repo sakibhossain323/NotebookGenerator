@@ -404,631 +404,252 @@ LL query(LL now, LL curLeft, LL curRight, LL l, LL r, LL k) {
         return query(2 * now, curLeft, mid, l, r, k) + query(2 * now + 1, mid + 1, curRight, l, r, k);
 }\end{lstlisting}
 \section{Graph}
-\subsection{Graph Template}
+\subsection{DSU BySize}
 \begin{lstlisting}
-struct edge {
-  int u, v;
-  edge(int u = 0, int v = 0) : u(u), v(v) {}
-  int to(int node) { return u ^ v ^ node; }
-};
-struct graph {
+vector<int> parent, setSize;
+void make_set(int v) {
+  parent[v] = v;
+  setSize[v] = 1;
+}
+int find_set(int v) {
+  if (v == parent[v]) return v;
+  return parent[v] = find_set(parent[v]);
+}
+void union_sets(int a, int b) {
+  a = find_set(a);
+  b = find_set(b);
+if (a != b) {
+    if (setSize[a] < setSize[b]) swap(a, b);
+    parent[b] = a;
+    setSize[a] += setSize[b];
+  }
+}
+int main() {
   int n;
-  vector<vector<int>> adj;
-  vector<edge> edges;
-  graph(int n = 0) : n(n), adj(n) {}
-  void addEdge(int u, int v, bool dir = 1) {
-    adj[u].push_back(edges.size());
-    if (dir) adj[v].push_back(edges.size());
-    edges.emplace_back(u, v);
-  }
-  int addNode() {
-    adj.emplace_back();
-    return n++;
-  }
-  edge &operator()(int idx) { return edges[idx]; }
-  vector<int> &operator[](int u) { return adj[u]; }
-};
-\end{lstlisting}
-\subsection{Lifting, LCA, HLD}
+  cin >> n;
+  parent.resize(n);
+  setSize.resize(n);
+  for (int i = 0; i < n; i++)  make_set(i);
+}\end{lstlisting}
+\subsection{MST Kruskal}
 \begin{lstlisting}
-using Tree = vector<vector<int>>;
-int anc[B][N], sz[N], lvl[N], st[N], en[N], nxt[N], t = 0;
+const ll sz = 1e5 + 7;
+vector<ll> pr(sz);
 
-void initLifting(int n) {
-  for (int b = 1; b < B; b++) {
-    for (int i = 0; i < n; i++) {
-      anc[b][i] = anc[b - 1][anc[b - 1][i]];
+ll find(ll x) {
+  if (pr[x] == x) return x;
+  return pr[x] = find(pr[x]);
+}
+
+void _union(ll x, ll y) {
+  pr[find(y)] = find(x);
+}
+
+signed main() {
+  ll n, m, i;
+  cin >> n >> m;
+  vector<tuple<ll, ll, ll>> edg(m);
+  iota(pr.begin(), pr.begin() + n + 1, 0);
+  for (auto &[w, u, v] : edg) cin >> u >> v >> w;
+  sort(edg.begin(), edg.end());
+
+  ll cost = 0;
+  for (auto [w, u, v] : edg) {
+    if (find(u) != find(v)) {
+      _union(u, v);
+      cost += w;
+    }
+  }
+  for (i = 1; i < n; i++) {
+    if (find(i) != find(i + 1)) {
+      cout << "IMPOSSIBLE\n";
+      return 0;
+    }
+  }
+  cout << cost << "\n";
+}
+\end{lstlisting}
+\subsection{Dijkstra}
+\begin{lstlisting}
+using pll = pair<ll, ll>;
+vector<pll> adj[MAX];
+vector<ll> dist(MAX, INF);
+vector<ll> par(MAX, -1);
+
+void dijkstra(int src)
+{
+  dist[src] = 0;
+  priority_queue<pll, vector<pll>, greater<pll>> pq;
+  pq.push({0, src});
+
+  while(!pq.empty())
+  {
+    auto [d, u] = pq.top();
+    pq.pop();
+
+    if(d > dist[u]) continue;
+
+    for(auto &[v, w]: adj[u])
+    {
+      if(dist[u]+w < dist[v])
+      {
+        dist[v] = dist[u]+w;
+        par[v] = u; 
+        pq.push({dist[v], v});
+      }
+    }
+  }
+}
+\end{lstlisting}
+\subsection{Bellman Ford}
+\begin{lstlisting}
+#define sz 100007
+ll INF = 1e18;
+vector<tuple<ll, ll, ll>> edg;
+vector<ll> dis(sz, INF);
+
+void bellman_ford(ll n) {
+  ll i, brk;
+  dis[1] = 0ll;
+  for (i = 1; i <= n; i++) {
+    brk = 0;
+    for (auto [u, v, w] : edg) {
+      if (dis[v] > dis[u] + w)
+        dis[v] = dis[u] + w; // for directional graph
+      else
+        brk++;
+    }
+    if (brk == n)
+      break; // optimization
+  }
+}
+
+bellman_ford(n);
+\end{lstlisting}
+\subsection{Floyd Warshall}
+\begin{lstlisting}
+vector<vector<ll>> w(sz, vector<ll>(sz, inf));
+
+void floyd_warshall(ll n) {
+  ll i, j, k;
+  for (i = 1; i <= n; i++)
+    w[i][i] = 0;
+  for (k = 1; k <= n; k++) {
+    for (i = 1; i <= n; i++) {
+      for (j = 1; j <= n; j++) {
+        w[j][i] = w[i][j] = min(w[i][j], w[i][k] + w[k][j]); // for bidirectional graph
+      }
     }
   }
 }
 
-int kthAncestor(int u, int k) {
-  for (int b = 0; b < B; b++) {
-    if (k >> b & 1) u = anc[b][u];
-  }
-  return u;
-}
-
-int lca(int u, int v) {
-  if (lvl[u] > lvl[v]) swap(u, v);
-  v = kthAncestor(v, lvl[v] - lvl[u]);
-
-  if (u == v) return u;
-
-  for (int b = B - 1; b >= 0; b--) {
-    if (anc[b][u] != anc[b][v]) u = anc[b][u], v = anc[b][v];
-  }
-  return anc[0][u];
-}
-
-int dis(int u, int v) {
-  int g = lca(u, v);
-  return lvl[u] + lvl[v] - 2 * lvl[g];
-}
-bool isAncestor(int u, int v) { return st[v] <= st[u] and en[u] <= en[v]; }
-
-void tour(int u, int p, Tree &T) {
-  st[u] = t++;
-  int idx = 0;
-  for (int v : T[u]) {
-    if (v == p) continue;
-    nxt[v] = (idx++ ? v : nxt[u]);  // only for hld
-    anc[0][v] = u, lvl[v] = lvl[u] + 1;
-    tour(v, u, T);
-  }
-  en[u] = t;  // [st, en] contains subtree range
-}
-
-void hld(int u, int p, Tree &T) {
-  sz[u] = 1;
-
-  int eld = 0, mx = 0, idx = 0;
-  for (int i = 0; i < T[u].size(); i++) {
-    int v = T[u][i];
-    if (v == p) continue;
-    hld(v, u, T);
-
-    if (sz[v] > mx) mx = sz[v], eld = i;
-    sz[u] += sz[v];
-  }
-  swap(T[u][0], T[u][eld]);
-}
-
-LL climbQuery(int u, int g) {
-  LL ans = -INF;
-  while (1) {
-    int _u = nxt[u];
-    if (isAncestor(g, _u)) _u = g;
-    ans = max(ans, rmq ::query(st[_u], st[u]));
-
-    if (_u == g) break;
-    u = anc[0][_u];
-  }
-  return ans;
-}
-
-LL pathQuery(int u, int v) {
-  int g = lca(u, v);
-  return max(climbQuery(u, g), climbQuery(v, g));
-}
-
-void init(int u, Tree &T) {
-  int n = T.size();
-  anc[0][u] = nxt[u] = u;
-  lvl[u] = 0;
-  hld(u, u, T);
-  tour(u, u, T);
-  initLifting(n);
-}
+w[b][a] = w[a][b] = min(c, w[a][b]); // for bidirectional graph
+floyd_warshall(n);
 \end{lstlisting}
 \subsection{SCC}
 \begin{lstlisting}
-vector<int> order, comp, idx;
-vector<bool> vis;
-vector<vector<int>> comps;
-Graph dag;
+#include <bits/stdc++.h>
+using namespace std;
 
-void dfs1(int u, Graph &G, string s = "") {
-  vis[u] = 1;
-  for (int e : G[u]) {
-    int v = G(e).to(u);
-    if (!vis[v]) dfs1(v, G, s);
-  }
-  order.push_back(u);
-}
-void dfs2(int u, Graph &R) {
-  comp.push_back(u);
-  idx[u] = comps.size();
+#define ll long long
 
-  for (int e : R[u]) {
-    int v = R(e).to(u);
-    if (idx[v] == -1) dfs2(v, R);
+const ll sz = 1e5 + 7;
+vector<ll> adj[sz];
+vector<ll> Radj[sz];
+vector<bool> vis(sz);
+vector<ll> ord;
+
+void dfs1(ll cur) {
+  vis[cur] = 1;
+  for (auto nxt : adj[cur]) {
+    if (!vis[nxt])
+      dfs1(nxt);
   }
+  ord.push_back(cur);
 }
 
-void init(Graph &G) {
-  int n = G.n;
-  vis.assign(n, 0);
-  idx.assign(n, -1);
-
-  for (int i = 0; i < n; i++) {
-    if (!vis[i]) dfs1(i, G);
-  }
-  reverse(order.begin(), order.end());
-
-  Graph R(n);
-  for (auto &e : G.edges) R.addEdge(e.v, e.u, 0);
-
-  for (int u : order) {
-    if (idx[u] != -1) continue;
-    comp.clear();
-    dfs2(u, R);
-    comps.push_back(comp);
+void dfs2(ll cur) {
+  vis[cur] = 1;
+  for (auto nxt : Radj[cur]) {
+    if (!vis[nxt])
+      dfs2(nxt);
   }
 }
 
-Graph &createDAG(Graph &G) {
-  int sz = comps.size();
-  dag = Graph(sz);
-
-  vector<bool> taken(sz);
-  vector<int> cur;
-
-  for (int i = 0; i < sz; i++) {
-    cur.clear();
-    taken[i] = 1;
-    for (int u : comps[i]) {
-      for (int e : G[u]) {
-        int v = G(e).to(u);
-        int j = idx[v];
-        if (taken[j]) continue;  // rejects multi-edge
-        dag.addEdge(i, j, 0);
-        taken[j] = 1;
-        cur.push_back(j);
-      }
-    }
-    for (int j : cur) taken[j] = 0;
+signed main() {
+  // strongly connected component kosaraju's algorithm
+  ll n, m, a, b, i;
+  cin >> n >> m;
+  for (i = 0; i < m; i++) {
+    cin >> a >> b;
+    adj[a].push_back(b);
+    Radj[b].push_back(a);
   }
-  return dag;
-}
-\end{lstlisting}
-\subsection{Centroid Decompose}
-\begin{lstlisting}
-namespace ct {
-int par[N], cnt[N], cntp[N];
-LL sum[N], sump[N];
-void activate(int u) {
-  int v = u, _u = u;
-
-  ans += sum[u];
-  cnt[u]++;
-  while (par[u] != -1) {
-    u = par[u];
-    LL d = ta ::dis(_u, u);
-    ans += sum[u] - sump[v];
-    ans += d * (cnt[u] - cntp[v]);
-
-    sum[u] += d;
-    cnt[u]++;
-
-    sump[v] += d;
-    cntp[v]++;
-
-    v = u;
+  for (i = 1; i <= n; i++) {
+    if (!vis[i])
+      dfs1(i);
   }
-}
-}
-namespace ctrd {
-int sz[N];
-bool blk[N];
-
-int szCalc(Tree &T, int u, int p = -1) {
-  sz[u] = 1;
-  for (int v : T[u]) {
-    if (v == p or blk[v]) continue;
-    sz[u] += szCalc(T, v, u);
-  }
-  return sz[u];
-}
-int getCentroid(Tree &T, int u, int s, int p = -1) {
-  for (int v : T[u]) {
-    if (v == p or blk[v]) continue;
-    if (sz[v] * 2 >= s) return getCentroid(T, v, s, u);
-  }
-  return u;
-}
-
-void decompose(Tree &T, int u, int p = -1) {
-  szCalc(T, u);
-  u = getCentroid(T, u, sz[u]);
-  ct ::par[u] = p;
-
-  blk[u] = 1;
-  for (int v : T[u]) {
-    if (!blk[v]) decompose(T, v, u);
-  }
-}
-}
-\end{lstlisting}
-\subsection{Euler Tour on Edge}
-\begin{lstlisting}
-// for simplicity, G[idx] contains the adjacency list of a node
-// while G(e) is a reference to the e-th edge.
-const int N = 2e5 + 5;
-int in[N], out[N], fwd[N], bck[N];
-int t = 0;
-void dfs(graph &G, int node, int par) {
-  out[node] = t;
-  for (int e : G[node]) {
-    int v = G(e).to(node);
-    if (v == par) continue;
-    fwd[e] = t++;
-    dfs(G, v, node);
-    bck[e] = t++;
-  }
-  in[node] = t - 1;
-}
-void init(graph &G, int node) {
-  t = 0;
-  dfs(G, node, node);
-}
-\end{lstlisting}
-\subsection{Virtual Tree}
-\begin{lstlisting}
-namespace lca1 {
-int st[N], lvl[N];
-int tbl[B][2 * N];
-int t = 0;
-
-void dfs(int u, int p, Tree &T) {
-  st[u] = t;
-  tbl[0][t++] = u;
-  for(int v: T[u]) {
-    if(v == p) continue;
-    lvl[v] = lvl[u] + 1;
-    dfs(v, u, T);
-    tbl[0][t++] = u;
-  }
-}
-int low(int u, int v) {
-  return make_pair(lvl[u], u) < make_pair(lvl[v], v) ? u : v;
-}
-
-void makeTable(int n) {
-  int m = 2 * n - 1;
-  for(int b = 1; b < B; b++) {
-    for(int i = 0; i < m; i++) {
-      tbl[b][i] = low(tbl[b - 1][i], tbl[b - 1][i + (1 << b - 1)]);
+  reverse(ord.begin(), ord.end());
+  for (i = 1; i <= n; i++)
+    vis[i] = 0;
+  vector<ll> scc;
+  for (auto e : ord) {
+    if (!vis[e]) {
+      scc.push_back(e);
+      dfs2(e);
     }
   }
-}
-
-int lca(int u, int v) {
-  int l = st[u], r = st[v];
-  if(l > r) swap(l, r);
-  int k = __lg(r - l + 1);
-  return low(tbl[k][l], tbl[k][r - (1 << k) + 1]);
-}
-void init(int root, Tree &T) {
-  lvl[root] = 0;
-  t = 0;
-  dfs(root, root, T);
-  makeTable(T.size());
-}
-}
-namespace vt {
-int st[N], en[N], t;
-vector <int> adj[N];
-
-void dfs(int u, int p, Tree &T) {
-  st[u] = t++;
-  for(int v: T[u]) if(v != p) dfs(v, u, T);
-  en[u] = t++;
-}
-bool comp(int u, int v) {
-  return st[u] < st[v];
-}
-bool isAncestor(int u, int p) {
-  return st[p] <= st[u] and en[u] <= en[p];
-}
-
-void construct(vector <int> &nodes) {
-  sort(nodes.begin(), nodes.end(), comp);
-  int n = nodes.size();
-  for(int i = 0; i + 1 < n; i++) {
-    nodes.push_back(lca1 :: lca(nodes[i], nodes[i + 1]));
+  if (scc.size() == 1) {
+    cout << "YES\n";
+    return 0;
   }
-  sort(nodes.begin(), nodes.end(), comp);
-  nodes.erase(unique(nodes.begin(), nodes.end()), nodes.end());
-  n = nodes.size();
-  stack <int> s;
-  s.push(nodes[0]);
-  for(int i = 1; i < n; i++) {
-    int u = nodes[i];
-    while(not isAncestor(u, s.top())) s.pop();
-    adj[s.top()].push_back(u);
-    s.push(u);
-  }
-}
-void clear(vector <int> &nodes) {
-  for(int u: nodes) {
-      adj[u].clear();
-  }
-}
+  cout << "NO\n";
 
-void init(int root, Tree &T) {
-  lca1 :: init(root, T);
-  t = 0;
-  dfs(root, root, T);
-}
-}\end{lstlisting}
-\subsection{Dinic Max Flow}
-\begin{lstlisting}
-/// flow with demand(lower bound) only for DAG
-// create new src and sink
-// add_edge(new src, u, sum(in_demand[u]))
-// add_edge(u, new sink, sum(out_demand[u]))
-// add_edge(old sink, old src, inf)
-//  if (sum of lower bound == flow) then demand satisfied
-// flow in every edge i = demand[i] + e.flow
-
-using Ti = long long;
-const Ti INF = 1LL << 60;
-struct edge {
-  int v, u;
-  Ti cap, flow = 0;
-  edge(int v, int u, Ti cap) : v(v), u(u), cap(cap) {}
-};
-const int N = 1e5 + 50;
-vector<edge> edges;
-vector<int> adj[N];
-int m = 0, n;
-int level[N], ptr[N];
-queue<int> q;
-bool bfs(int s, int t) {
-  for (q.push(s), level[s] = 0; !q.empty(); q.pop()) {
-    for (int id : adj[q.front()]) {
-      auto &ed = edges[id];
-      if (ed.cap - ed.flow > 0 and level[ed.u] == -1)
-        level[ed.u] = level[ed.v] + 1, q.push(ed.u);
-    }
-  }
-  return level[t] != -1;
-}
-Ti dfs(int v, Ti pushed, int t) {
-  if (pushed == 0) return 0;
-  if (v == t) return pushed;
-  for (int &cid = ptr[v]; cid < adj[v].size(); cid++) {
-    int id = adj[v][cid];
-    auto &ed = edges[id];
-    if (level[v] + 1 != level[ed.u] || ed.cap - ed.flow < 1) continue;
-    Ti tr = dfs(ed.u, min(pushed, ed.cap - ed.flow), t);
-    if (tr == 0) continue;
-    ed.flow += tr;
-    edges[id ^ 1].flow -= tr;
-    return tr;
-  }
+  for (i = 1; i <= n; i++)
+    vis[i] = 0;
+  dfs2(scc[0]);
+  if (vis[scc[1]])
+    cout << scc[0] << " " << scc[1] << "\n";
+  else
+    cout << scc[1] << " " << scc[0] << "\n";
   return 0;
 }
-void init(int nodes) {
-  m = 0, n = nodes;
-  for (int i = 0; i < n; i++) level[i] = -1, ptr[i] = 0, adj[i].clear();
-}
-void addEdge(int v, int u, Ti cap) {
-  edges.emplace_back(v, u, cap), adj[v].push_back(m++);
-  edges.emplace_back(u, v, 0), adj[u].push_back(m++);
-}
-Ti maxFlow(int s, int t) {
-  Ti f = 0;
-  for (auto &ed : edges) ed.flow = 0;
-  for (; bfs(s, t); memset(level, -1, n * 4)) {
-    for (memset(ptr, 0, n * 4); Ti pushed = dfs(s, INF, t); f += pushed)
-      ;
-  }
-  return f;
-}
 \end{lstlisting}
-\subsection{Min Cost Max Flow}
+\subsection{LCA}
 \begin{lstlisting}
-mt19937 rnd(chrono::steady_clock::now().time_since_epoch().count());
-const LL inf = 1e9;
-struct edge {
-  int v, rev;
-  LL cap, cost, flow;
-  edge() {}
-  edge(int v, int rev, LL cap, LL cost)
-      : v(v), rev(rev), cap(cap), cost(cost), flow(0) {}
-};
-struct mcmf {
-  int src, sink, n;
-  vector<int> par, idx, Q;
-  vector<bool> inq;
-  vector<LL> dis;
-  vector<vector<edge>> g;
-  mcmf() {}
-  mcmf(int src, int sink, int n)
-      : src(src),
-        sink(sink),
-        n(n),
-        par(n),
-        idx(n),
-        inq(n),
-        dis(n),
-        g(n),
-        Q(10000005) {}  // use Q(n) if not using random
-  void add_edge(int u, int v, LL cap, LL cost, bool directed = true) {
-    edge _u = edge(v, g[v].size(), cap, cost);
-    edge _v = edge(u, g[u].size(), 0, -cost);
-    g[u].pb(_u);
-    g[v].pb(_v);
-    if (!directed) add_edge(v, u, cap, cost, true);
+LL n, l, timer;
+vector<vector<LL>> adj;
+vector<LL> tin, tout;
+vector<vector<LL>> up;
+void dfs(LL v, LL p) {
+  tin[v] = ++timer;
+  up[v][0] = p;
+  for (LL i = 1; i <= l; ++i)
+    up[v][i] = up[up[v][i-1]][i-1];
+  for (LL u : adj[v]) {
+    if (u != p) dfs(u, v);
   }
-  bool spfa() {
-    for (int i = 0; i < n; i++) {
-      dis[i] = inf, inq[i] = false;
-    }
-    int f = 0, l = 0;
-    dis[src] = 0, par[src] = -1, Q[l++] = src, inq[src] = true;
-    while (f < l) {
-      int u = Q[f++];
-      for (int i = 0; i < g[u].size(); i++) {
-        edge &e = g[u][i];
-        if (e.cap <= e.flow) continue;
-        if (dis[e.v] > dis[u] + e.cost) {
-          dis[e.v] = dis[u] + e.cost;
-          par[e.v] = u, idx[e.v] = i;
-          if (!inq[e.v]) inq[e.v] = true, Q[l++] = e.v;
-          // if (!inq[e.v]) {
-          //   inq[e.v] = true;
-          //   if (f && rnd() & 7) Q[--f] = e.v;
-          //   else Q[l++] = e.v;
-          // }
-        }
-      }
-      inq[u] = false;
-    }
-    return (dis[sink] != inf);
-  }
-  pair<LL, LL> solve() {
-    LL mincost = 0, maxflow = 0;
-    while (spfa()) {
-      LL bottleneck = inf;
-      for (int u = par[sink], v = idx[sink]; u != -1; v = idx[u], u = par[u]) {
-        edge &e = g[u][v];
-        bottleneck = min(bottleneck, e.cap - e.flow);
-      }
-      for (int u = par[sink], v = idx[sink]; u != -1; v = idx[u], u = par[u]) {
-        edge &e = g[u][v];
-        e.flow += bottleneck;
-        g[e.v][e.rev].flow -= bottleneck;
-      }
-      mincost += bottleneck * dis[sink], maxflow += bottleneck;
-    }
-    return make_pair(mincost, maxflow);
-  }
-};
-// want to minimize cost and don't care about flow
-// add edge from sink to dummy sink (cap = inf, cost = 0)
-// add edge from source to sink (cap = inf, cost = 0)
-// run mcmf, cost returned is the minimum cost
-\end{lstlisting}
-\subsection{Block Cut Tree}
-\begin{lstlisting}
-vector<vector<int> > components;
-vector<int> cutpoints, start, low;
-vector<bool> is_cutpoint;
-stack<int> st;
-void find_cutpoints(int node, graph &G, int par = -1, int d = 0) {
-  low[node] = start[node] = d++;
-  st.push(node);
-  int cnt = 0;
-  for (int e : G[node])
-    if (int to = G(e).to(node); to != par) {
-      if (start[to] == -1) {
-        find_cutpoints(to, G, node, d + 1);
-        cnt++;
-        if (low[to] >= start[node]) {
-          is_cutpoint[node] = par != -1 or cnt > 1;
-          components.push_back({node});  // starting a new block with the point
-          while (st.top() != node)
-            components.back().push_back(st.top()), st.pop();
-        }
-      }
-      low[node] = min(low[node], low[to]);
-    }
+  tout[v] = ++timer;
 }
-graph tree;
-vector<int> id;
-void init(graph &G) {
-  int n = G.n;
-  start.assign(n, -1), low.resize(n), is_cutpoint.resize(n), id.assign(n, -1);
-  find_cutpoints(0, G);
-  for (int u = 0; u < n; ++u)
-    if (is_cutpoint[u]) id[u] = tree.addNode();
-  for (auto &comp : components) {
-    int node = tree.addNode();
-    for (int u : comp)
-      if (!is_cutpoint[u])
-        id[u] = node;
-      else
-        tree.addEdge(node, id[u]);
-  }
-  if (id[0] == -1)  // corner - 1
-    id[0] = tree.addNode();
+bool is_ancestor(LL u, LL v)  {
+  return tin[u] <= tin[v] && tout[u] >= tout[v];
 }
-\end{lstlisting}
-\subsection{Bridge Tree}
-\begin{lstlisting}
-vector<vector<int>> comps;
-vector<int> depth, low, id;
-stack<int> st;
-vector<Edge> bridges;
-Graph tree;
-
-void dfs(int u, Graph &G, int ed = -1, int d = 0) {
-  low[u] = depth[u] = d;
-  st.push(u);
-  for (int e : G[u]) {
-    if (e == ed) continue;
-    int v = G(e).to(u);
-    if (depth[v] == -1) dfs(v, G, e, d + 1);
-    low[u] = min(low[u], low[v]);
-
-    if (low[v] <= depth[u]) continue;
-    bridges.emplace_back(u, v);
-    comps.emplace_back();
-    do {
-      comps.back().push_back(st.top()), st.pop();
-    } while (comps.back().back() != v);
+LL lca(LL u, LL v) {
+  if (is_ancestor(u, v)) return u;
+  if (is_ancestor(v, u)) return v;
+  for (LL i = l; i >= 0; --i) {
+    if (!is_ancestor(up[u][i], v)) u = up[u][i];
   }
-  if (ed == -1) {
-    comps.emplace_back();
-    while (!st.empty()) comps.back().push_back(st.top()), st.pop();
-  }
+  return up[u][0];
 }
-Graph &createTree() {
-  for (auto &comp : comps) {
-    int idx = tree.addNode();
-    for (auto &e : comp) id[e] = idx;
-  }
-  for (auto &[l, r] : bridges) tree.addEdge(id[l], id[r]);
-  return tree;
-}
-
-void init(Graph &G) {
-  int n = G.n;
-  depth.assign(n, -1), id.assign(n, -1), low.resize(n);
-  for (int i = 0; i < n; i++) {
-    if (depth[i] == -1) dfs(i, G);
-  }
-}
-\end{lstlisting}
-\subsection{Tree Isomorphism}
-\begin{lstlisting}
-mp["01"] = 1;
-ind = 1;
-int dfs(int u, int p) {
-  int cnt = 0;
-  vector<int> vs;
-  for (auto v : g1[u]) {
-    if (v != p) {
-      int got = dfs(v, u);
-      vs.pb(got);
-      cnt++;
-    }
-  }
-  if (!cnt) return 1;
-
-  sort(vs.begin(), vs.end());
-  string s = "0";
-  for (auto i : vs) s += to_string(i);
-  vs.clear();
-  s.pb('1');
-  if (mp.find(s) == mp.end()) mp[s] = ++ind;
-  int ret = mp[s];
-  return ret;
-}
-\end{lstlisting}
+void preprocess(LL root) {
+  tin.resize(n);
+  tout.resize(n);
+  timer = 0;
+  l = ceil(log2(n));
+  up.assign(n, vector<LL>(l + 1));
+  dfs(root, root);
+}\end{lstlisting}
 \section{Math}
 \subsection{Combi}
 \begin{lstlisting}
