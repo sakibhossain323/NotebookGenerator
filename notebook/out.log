@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.14.0 (TeX Live 2022/dev/Debian)  (format=lualatex 2024.3.2)  3 MAR 2024 00:57
+This is LuaHBTeX, Version 1.14.0 (TeX Live 2022/dev/Debian)  (format=lualatex 2024.3.2)  3 MAR 2024 02:22
  restricted system commands enabled.
 **out.tex
 (./out.tex
@@ -723,6 +723,60 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
 
 [12]
+Overfull \hbox (22.21336pt too wide) in paragraph at lines 1778--1779
+[][][][][] 
+ []
+
+
+Overfull \hbox (18.58841pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (37.48837pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (18.58841pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (18.58841pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (18.58841pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (18.58841pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (18.58841pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (18.58841pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (18.58841pt too wide) in paragraph at lines 1778--1779
+[][] 
+ []
+
+
+Overfull \hbox (13.86342pt too wide) in paragraph at lines 1778--1779
+[]  
+ []
+
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 14.0pt, for example:
@@ -741,60 +795,6 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
 
 [14]
-Overfull \hbox (22.21336pt too wide) in paragraph at lines 2049--2050
-[][][][][] 
- []
-
-
-Overfull \hbox (18.58841pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (37.48837pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (18.58841pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (18.58841pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (18.58841pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (18.58841pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (18.58841pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (18.58841pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (18.58841pt too wide) in paragraph at lines 2049--2050
-[][] 
- []
-
-
-Overfull \hbox (13.86342pt too wide) in paragraph at lines 2049--2050
-[]  
- []
-
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 14.0pt, for example:
@@ -821,25 +821,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
 
-[17]
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 14.0pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.0pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
-
-[18]
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 14.0pt, for example:
-(fancyhdr)                \setlength{\headheight}{14.0pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
-
-[19] (./Extra/math.tex
+[17] (./Extra/math.tex
 
 Package amsmath Warning: Foreign command \atopwithdelims;
 (amsmath)                \frac or \genfrac should be used instead
@@ -878,22 +860,22 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
 
-[20]) (./out.aux)
+[18]) (./out.aux)
 Package rerunfilecheck Info: File `out.out' has not changed.
-(rerunfilecheck)             Checksum: 5F2E076768A3EBC60FAE953028EE9E99;6681.
+(rerunfilecheck)             Checksum: EC8EEA9E4B42A139CFE9D96591CEFCE6;6137.
 )
 
 Here is how much of LuaTeX's memory you used:
- 17381 strings out of 477805
- 1819479,794899 words of node,token memory allocated
+ 17074 strings out of 477805
+ 1819574,794899 words of node,token memory allocated
  586 words of node memory still in use:
    7 hlist, 2 vlist, 2 rule, 2 glue, 1 kern, 26 attribute, 59 glue_spec, 26 attr
 ibute_list, 1 write nodes
-   avail lists: 2:21531,3:985,4:2700,5:44691,6:322,7:60203,8:303,9:90040,10:47,1
-1:4707
- 35009 multiletter control sequences out of 65536+600000
+   avail lists: 1:1,2:21712,3:1041,4:2404,5:45923,6:324,7:55901,8:303,9:92417,10
+:48,11:4868
+ 34960 multiletter control sequences out of 65536+600000
  35 fonts using 1459567 bytes
- 60i,12n,65p,557b,1249s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,12n,65p,557b,1241s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc}{/usr/share/texmf/fonts/enc/dvips
 /lm/lm-ts1.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc}</usr/share/texl
 ive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/tex
@@ -908,10 +890,10 @@ hare/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public
 /lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/tex
 mf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr7.
 pfb></usr/share/texmf/fonts/type1/public/lm/lmtt9.pfb>
-Output written on out.pdf (21 pages, 384702 bytes).
+Output written on out.pdf (19 pages, 370184 bytes).
 
-PDF statistics: 2958 PDF objects out of 2984 (max. 8388607)
- 2891 compressed objects within 29 object streams
- 2480 named destinations out of 2487 (max. 131072)
- 457 words of extra memory for PDF output out of 10000 (max. 100000000)
+PDF statistics: 2675 PDF objects out of 2984 (max. 8388607)
+ 2612 compressed objects within 27 object streams
+ 2222 named destinations out of 2487 (max. 131072)
+ 441 words of extra memory for PDF output out of 10000 (max. 100000000)
 

@@ -650,7 +650,509 @@ void preprocess(LL root) {
   up.assign(n, vector<LL>(l + 1));
   dfs(root, root);
 }\end{lstlisting}
+\section{String}
+\subsection{Hashing}
+\begin{lstlisting}
+class HashedString {
+private:
+  static const long long M = 1e9 + 7;
+  static const long long B = 256;
+  static vector<long long> pow;
+  vector<long long> p_hash;
+
+public:
+  HashedString(const string& s) : p_hash(s.size() + 1) {
+    while (pow.size() < s.size()) {
+      pow.push_back((pow.back() * B) % M);
+    }
+    p_hash[0] = 0;
+    for (int i = 0; i < s.size(); i++) {
+      p_hash[i + 1] = ((p_hash[i] * B) % M + s[i]) % M;
+    }
+  }
+
+  long long getHash(int start, int end) {
+    long long raw_val = (
+      p_hash[end + 1] - (p_hash[start] * pow[end - start + 1])
+    );
+    return (raw_val % M + M) % M;
+  }
+};
+
+vector<long long> HashedString::pow = {1};
+\end{lstlisting}
+\subsection{Double hash}
+\begin{lstlisting}
+// define +, -, * for (PLL, LL) and (PLL, PLL), % for (PLL, PLL);
+PLL base(1949313259, 1997293877);
+PLL mod(2091573227, 2117566807);
+
+PLL power(PLL a, LL p) {
+  PLL ans = PLL(1, 1);
+  for(; p; p >>= 1, a = a * a % mod) {
+      if(p & 1) ans = ans * a % mod;
+  }
+  return ans;
+}
+
+PLL inverse(PLL a) { return power(a, (mod.ff - 1) * (mod.ss - 1) - 1); }
+PLL inv_base = inverse(base);
+PLL val;
+vector<PLL> P;
+
+void hash_init(int n) {
+  P.resize(n + 1);
+  P[0] = PLL(1, 1);
+  for (int i = 1; i <= n; i++) P[i] = (P[i - 1] * base) % mod;
+}
+PLL append(PLL cur, char c) { return (cur * base + c) % mod; }
+/// prepends c to string with size k
+PLL prepend(PLL cur, int k, char c) { return (P[k] * c + cur) % mod; }
+/// replaces the i-th (0-indexed) character from right from a to b;
+PLL replace(PLL cur, int i, char a, char b) {
+  cur = (cur + P[i] * (b - a)) % mod;
+  return (cur + mod) % mod;
+}
+/// Erases c from the back of the string
+PLL pop_back(PLL hash, char c) {
+  return (((hash - c) * inv_base) % mod + mod) % mod;
+}
+/// Erases c from front of the string with size len
+PLL pop_front(PLL hash, int len, char c) {
+  return ((hash - P[len - 1] * c) % mod + mod) % mod;
+}
+/// concatenates two strings where length of the right is k
+PLL concat(PLL left, PLL right, int k) { return (left * P[k] + right) % mod; }
+/// Calculates hash of string with size len repeated cnt times
+/// This is O(log n). For O(1), pre-calculate inverses
+PLL repeat(PLL hash, int len, LL cnt) {
+  PLL mul = (P[len * cnt] - 1) * inverse(P[len] - 1);
+  mul = (mul % mod + mod) % mod;
+  PLL ret = (hash * mul) % mod;
+  if (P[len].ff == 1) ret.ff = hash.ff * cnt;
+  if (P[len].ss == 1) ret.ss = hash.ss * cnt;
+  return ret;
+}
+LL get(PLL hash) { return ((hash.ff << 32) ^ hash.ss); }
+struct hashlist {
+  int len;
+  vector<PLL> H, R;
+  hashlist() {}
+  hashlist(string& s) {
+    len = (int)s.size();
+    hash_init(len);
+    H.resize(len + 1, PLL(0, 0)), R.resize(len + 2, PLL(0, 0));
+    for (int i = 1; i <= len; i++) H[i] = append(H[i - 1], s[i - 1]);
+    for (int i = len; i >= 1; i--) R[i] = append(R[i + 1], s[i - 1]);
+  }
+  /// 1-indexed
+  PLL range_hash(int l, int r) {
+    return ((H[r] - H[l - 1] * P[r - l + 1]) % mod + mod) % mod;
+  }
+  PLL reverse_hash(int l, int r) {
+    return ((R[l] - R[r + 1] * P[r - l + 1]) % mod + mod) % mod;
+  }
+  PLL concat_range_hash(int l1, int r1, int l2, int r2) {
+    return concat(range_hash(l1, r1), range_hash(l2, r2), r2 - l2 + 1);
+  }
+  PLL concat_reverse_hash(int l1, int r1, int l2, int r2) {
+    return concat(reverse_hash(l2, r2), reverse_hash(l1, r1), r1 - l1 + 1);
+  }
+};
+\end{lstlisting}
+\subsection{Aho Corasick}
+\begin{lstlisting}
+struct AC {
+int N, P;
+const int A = 26;
+vector<vector<int>> next;
+vector<int> link, out_link;
+vector<vector<int>> out;
+AC() : N(0), P(0) { node(); }
+int node() {
+  next.emplace_back(A, 0);
+  link.emplace_back(0);
+  out_link.emplace_back(0);
+  out.emplace_back(0);
+  return N++;
+}
+inline int get(char c) { return c - 'a'; }
+int add_pattern(const string T) {
+  int u = 0;
+  for (auto c : T) {
+    if (!next[u][get(c)]) next[u][get(c)] = node();
+    u = next[u][get(c)];
+  }
+  out[u].push_back(P);
+  return P++;
+}
+void compute() {
+  queue<int> q;
+  for (q.push(0); !q.empty();) {
+    int u = q.front(); q.pop();
+    for (int c = 0; c < A; ++c) {
+      int v = next[u][c];
+      if (!v) next[u][c] = next[link[u]][c];
+      else {
+        link[v] = u ? next[link[u]][c] : 0;
+        out_link[v] = out[link[v]].empty() ? out_link[link[v]] : link[v];
+        q.push(v);
+      }
+    }
+  }
+}
+int advance(int u, char c) {
+  while (u && !next[u][get(c)]) u = link[u];
+  u = next[u][get(c)];
+  return u;
+}
+void match(const string S) {
+  int u = 0;
+  for (auto c : S) {
+    u = advance(u, c);
+    for (int v = u; v; v = out_link[v]) {
+      for (auto p : out[v]) cout << "match " << p << endl;
+    }
+  }
+}
+};
+int main() {
+  AC aho; int n; cin >> n;
+  while (n--) {
+    string s; cin >> s;
+    aho.add_pattern(s);
+  }
+  aho.compute(); string text;
+  cin >> text; aho.match(text);
+  return 0;
+}
+\end{lstlisting}
+\subsection{KMP}
+\begin{lstlisting}
+vector<int> prefix_function(string s) {
+  int n = (int)s.length();
+  vector<int> pi(n);
+  
+  for (int i = 1; i < n; i++) {
+    int j = pi[i - 1];
+    while (j > 0 && s[i] != s[j])
+      j = pi[j - 1];
+    if (s[i] == s[j])
+      j++;
+    pi[i] = j;
+  }
+  
+  return pi;
+}
+\end{lstlisting}
+\subsection{Manacher's}
+\begin{lstlisting}
+vector<int> d1(n);
+// d[i] = number of palindromes taking s[i] as center
+for (int i = 0, l = 0, r = -1; i < n; i++) {
+  int k = (i > r) ? 1 : min(d1[l + r - i], r - i + 1);
+  while (0 <= i - k && i + k < n && s[i - k] == s[i + k]) k++;
+  d1[i] = k--;
+  if (i + k > r) l = i - k, r = i + k;
+}
+vector<int> d2(n);
+// d[i] = number of palindromes taking s[i-1] and s[i] as center
+for (int i = 0, l = 0, r = -1; i < n; i++) {
+  int k = (i > r) ? 0 : min(d2[l + r - i + 1], r - i + 1);
+  while (0 <= i - k - 1 && i + k < n && s[i - k - 1] == s[i + k]) k++;
+  d2[i] = k--;
+  if (i + k > r) l = i - k - 1, r = i + k;
+}
+\end{lstlisting}
+\subsection{Suffix Match FFT}
+\begin{lstlisting}
+// Find occurrences of t in s where '?'s are automatically matched with any character
+// res[i + m - 1] = sum_j=0 to m - 1 { s[i + j] * t[j] * (s[i + j] - t[j]) }
+vector<int> string_matching(string &s, string &t) {
+  int n = s.size(), m = t.size();
+  vector<int> s1(n), s2(n), s3(n);
+  for(int i = 0; i < n; i++)
+    s1[i] = s[i] == '?' ? 0 : s[i] - 'a' + 1; // assign any non zero number for non '?'s
+  for(int i = 0; i < n; i++)
+    s2[i] = s1[i] * s1[i];
+  for(int i = 0; i < n; i++)
+    s3[i] = s1[i] * s2[i];
+  
+  vector<int> t1(m), t2(m), t3(m);
+  for(int i = 0; i < m; i++)
+    t1[i] = t[i] == '?' ? 0 : t[i] - 'a' + 1;
+  for(int i = 0; i < m; i++)
+    t2[i] = t1[i] * t1[i];
+  for(int i = 0; i < m; i++)
+    t3[i] = t1[i] * t2[i];
+  
+  reverse(t1.begin(), t1.end());
+  reverse(t2.begin(), t2.end());
+  reverse(t3.begin(), t3.end());
+  
+  vector<int> s1t3 = multiply(s1, t3);
+  vector<int> s2t2 = multiply(s2, t2);
+  vector<int> s3t1 = multiply(s3, t1);
+  
+  vector<int> res(n);
+  for(int i = 0; i < n; i++)
+    res[i] = s1t3[i] - s2t2[i] * 2 + s3t1[i];
+  
+  vector<int> oc;
+  for(int i = m - 1; i < n; i++)
+    if(res[i] == 0)
+      oc.push_back(i - m + 1);
+  
+  return oc;
+}
+\end{lstlisting}
+\subsection{Suffix Array}
+\begin{lstlisting}
+vector<VI> c;
+VI sort_cyclic_shifts(const string &s) {
+  int n = s.size();
+  const int alphabet = 256;
+  VI p(n), cnt(alphabet, 0);
+
+  c.clear();
+  c.emplace_back();
+  c[0].resize(n);
+
+  for (int i = 0; i < n; i++) cnt[s[i]]++;
+  for (int i = 1; i < alphabet; i++) cnt[i] += cnt[i - 1];
+  for (int i = 0; i < n; i++) p[--cnt[s[i]]] = i;
+
+  c[0][p[0]] = 0;
+  int classes = 1;
+
+  for (int i = 1; i < n; i++) {
+    if (s[p[i]] != s[p[i - 1]]) classes++;
+    c[0][p[i]] = classes - 1;
+  }
+
+  VI pn(n), cn(n);
+  cnt.resize(n);
+  for (int h = 0; (1 << h) < n; h++) {
+    for (int i = 0; i < n; i++) {
+      pn[i] = p[i] - (1 << h);
+      if (pn[i] < 0) pn[i] += n;
+    }
+    fill(cnt.begin(), cnt.end(), 0);
+    /// radix sort
+    for (int i = 0; i < n; i++) cnt[c[h][pn[i]]]++;
+    for (int i = 1; i < classes; i++) cnt[i] += cnt[i - 1];
+    for (int i = n - 1; i >= 0; i--) p[--cnt[c[h][pn[i]]]] = pn[i];
+
+    cn[p[0]] = 0;
+    classes = 1;
+
+    for (int i = 1; i < n; i++) {
+      PII cur = {c[h][p[i]], c[h][(p[i] + (1 << h)) % n]};
+      PII prev = {c[h][p[i - 1]], c[h][(p[i - 1] + (1 << h)) % n]};
+      if (cur != prev) ++classes;
+      cn[p[i]] = classes - 1;
+    }
+    c.push_back(cn);
+  }
+  return p;
+}
+VI suffix_array_construction(string s) {
+  s += "!";
+  VI sorted_shifts = sort_cyclic_shifts(s);
+  sorted_shifts.erase(sorted_shifts.begin());
+  return sorted_shifts;
+}
+/// LCP between the ith and jth (i != j) suffix of the STRING
+int suffixLCP(int i, int j) {
+  assert(i != j);
+  int log_n = c.size() - 1;
+
+  int ans = 0;
+  for (int k = log_n; k >= 0; k--) {
+    if (c[k][i] == c[k][j]) {
+      ans += 1 << k;
+      i += 1 << k;
+      j += 1 << k;
+    }
+  }
+  return ans;
+}
+
+VI lcp_construction(const string &s, const VI &sa) {
+  int n = s.size();
+  VI rank(n, 0);
+  VI lcp(n - 1, 0);
+
+  for (int i = 0; i < n; i++) rank[sa[i]] = i;
+
+  for (int i = 0, k = 0; i < n; i++, k -= (k != 0)) {
+    if (rank[i] == n - 1) {
+      k = 0;
+      continue;
+    }
+    int j = sa[rank[i] + 1];
+    while (i + k < n && j + k < n && s[i + k] == s[j + k]) k++;
+    lcp[rank[i]] = k;
+  }
+  return lcp;
+}
+\end{lstlisting}
+\subsection{Trie}
+\begin{lstlisting}
+template<int sz>
+struct Trie {
+  Trie() : id(1) {
+    memset(endMark, 0, sizeof endMark);
+    for_each(all(trie), [](vector<int> &v) { v.assign(sz, 0); });
+  }
+
+  void insert(const string &s) {
+    int cur = 0;
+    for (auto c : s) {
+      int val = c - 'a';
+      if (!trie[cur][val])
+        trie[cur][val] = id++;
+      cur = trie[cur][val];
+    }
+    endMark[cur] = true;
+  }
+
+  bool search(const string &s) {
+    int cur = 0;
+    for (auto c : s) {
+      int val = c - 'a';
+      if (!trie[cur][val])
+        return false;
+      cur = trie[cur][val];
+    }
+    return endMark[cur];
+  }
+
+private:
+  int id, endMark[100005];
+  vector<int> trie[100005];
+};
+\end{lstlisting}
+\subsection{Z Algo}
+\begin{lstlisting}
+vector<int> calcz(string s) {
+  int n = s.size();
+  vector<int> z(n);
+  int l = 0, r = 0;
+  for (int i = 1; i < n; i++) {
+    if (i > r) {
+      l = r = i;
+      while (r < n && s[r] == s[r - l]) r++;
+      z[i] = r - l, r--;
+    } else {
+      int k = i - l;
+      if (z[k] < r - i + 1) z[i] = z[k];
+      else {
+        l = i;
+        while (r < n && s[r] == s[r - l]) r++;
+        z[i] = r - l, r--;
+      }
+    }
+  }
+  return z;
+}
+\end{lstlisting}
+\section{DP}
+\subsection{Bitmask}
+\begin{lstlisting}
+for(int mask= 0; mask < (1 << 4); mask++){
+  ll sum_of_set = 0;
+  for(int i = 0; (1ll << i) <= mask; i++) if(mask& (1ll << i)) sum_of_set += v[i];
+  if(sum_of_set == S){
+    cout << "Yes\n";
+    flg = true;
+    break;
+  }
+}
+if(!flg) cout << "No\n";\end{lstlisting}
+\subsection{LIS}
+\begin{lstlisting}
+vector<pair<ll, ll>> LIS(vector<ll> &v){
+  ll n=v.size();
+  vector<pair<ll, ll>> seq(n); //{size, last element}
+  set<ll> s; //multiset for non_dcrs
+  for(int i=0; i<n; ++i){
+    auto it=s.lower_bound(v[i]);
+    if(it==s.end()) s.insert(v[i]);
+    else{
+      s.erase(it);
+      s.insert(v[i]);
+    } 
+    seq[i]={s.size(), *(s.rbegin())};
+  }
+  return seq;
+} //seq[i] = {size of LIS in v[0, i], largest element in that sequence}\end{lstlisting}
+\subsection{Divide and Conquer DP}
+\begin{lstlisting}
+const int K = 805, N = 4005;
+LL dp[2][N], _cost[N][N];
+// 1-indexed for convenience
+LL cost(int l, int r) {
+  return _cost[r][r] - _cost[l - 1][r] - _cost[r][l - 1] + _cost[l - 1][l - 1] >> 1;
+}
+void compute(int cnt, int l, int r, int optl, int optr) {
+  if (l > r) return;
+  int mid = l + r >> 1;
+  LL best = INT_MAX;
+  int opt = -1;
+  for (int i = optl; i <= min(mid, optr); i++) {
+    LL cur = dp[cnt ^ 1][i - 1] + cost(i, mid);
+    if (cur < best) best = cur, opt = i;
+  }
+  dp[cnt][mid] = best;
+  compute(cnt, l, mid - 1, optl, opt);
+  compute(cnt, mid + 1, r, opt, optr);
+}
+LL dnc_dp(int k, int n) {
+  fill(dp[0] + 1, dp[0] + n + 1, INT_MAX);
+  for (int cnt = 1; cnt <= k; cnt++) {
+    compute(cnt & 1, 1, n, 1, n);
+  }
+  return dp[k & 1][n];
+}
+\end{lstlisting}
+\subsection{Knuth Optimization}
+\begin{lstlisting}
+const int N = 1005;
+LL dp[N][N], a[N];
+int opt[N][N];
+LL cost(int i, int j) { return a[j + 1] - a[i]; }
+LL knuth_optimization(int n) {
+  for (int i = 0; i < n; i++) {
+    dp[i][i] = 0;
+    opt[i][i] = i;
+  }
+  for (int i = n - 2; i >= 0; i--) {
+    for (int j = i + 1; j < n; j++) {
+      LL mn = LLONG_MAX;
+      LL c = cost(i, j);
+      for (int k = opt[i][j - 1]; k <= min(j - 1, opt[i + 1][j]); k++) {
+        if (mn > dp[i][k] + dp[k + 1][j] + c) {
+          mn = dp[i][k] + dp[k + 1][j] + c;
+          opt[i][j] = k;
+        }
+      }
+      dp[i][j] = mn;
+    }
+  }
+  return dp[0][n - 1];
+}
+\end{lstlisting}
 \section{Math}
+\subsection{BigMod}
+\begin{lstlisting}
+ll bigmod(ll a, ll b, ll m) {
+  if(b  == 0) return 1;
+  ll x = bigmod(a, b/2, m);
+  x = (x * x) % m;
+  if(b % 2) x = (x * a) % m;
+  return x;
+}\end{lstlisting}
 \subsection{Combi}
 \begin{lstlisting}
 array<int, N + 1> fact, inv, inv_fact;
@@ -666,6 +1168,24 @@ LL C(int n, int r) {
   return (r < 0 or r > n) ? 0 : (LL)fact[n] * inv_fact[r] % mod * inv_fact[n - r] % mod;
 }
 \end{lstlisting}
+\subsection{Sieve}
+\begin{lstlisting}
+const ll m = 10e6;
+vector<ll> lp(m+1);
+vector<ll> prime;
+void ln_sieve() {
+  for(ll i = 2; i <= m; i++){
+    if(!lp[i]){
+      lp[i] = i;
+      prime.push_back(i);
+    }
+
+    for(ll j = 0; i * prime[j] <= m; j++){
+      lp[i * prime[j]] = prime[j];
+      if(prime[j] == lp[i]) break;
+    }
+  }
+}\end{lstlisting}
 \subsection{Linear Sieve}
 \begin{lstlisting}
 const int N = 1e7;
@@ -979,797 +1499,6 @@ vector<LL> mul(vector<LL> p, vector<LL> q) {
   while (c.size() && c.back() == 0) c.pop_back();
   return c;
 }
-\end{lstlisting}
-\subsection{WalshHadamard}
-\begin{lstlisting}
-#include <bits/stdc++.h>
-using namespace std;
-typedef long long LL;
-#define bitwiseXOR 1
-// #define bitwiseAND 2
-// #define bitwiseOR 3
-const LL MOD = 30011;
-
-LL BigMod(LL b, LL p) {
-  LL ret = 1;
-  while (p > 0) {
-    if (p % 2 == 1) {
-      ret = (ret * b) % MOD;
-    }
-    p = p / 2;
-    b = (b * b) % MOD;
-  }
-  return ret % MOD;
-}
-
-void FWHT(vector<LL>& p, bool inverse) {
-  LL n = p.size();
-  assert((n & (n - 1)) == 0);
-
-  for (LL len = 1; 2 * len <= n; len <<= 1) {
-    for (LL i = 0; i < n; i += len + len) {
-      for (LL j = 0; j < len; j++) {
-        LL u = p[i + j];
-        LL v = p[i + len + j];
-
-#ifdef bitwiseXOR
-        p[i + j] = (u + v) % MOD;
-        p[i + len + j] = (u - v + MOD) % MOD;
-#endif  // bitwiseXOR
-
-#ifdef bitwiseAND
-        if (!inverse) {
-          p[i + j] = v % MOD;
-          p[i + len + j] = (u + v) % MOD;
-        } else {
-          p[i + j] = (-u + v) % MOD;
-          p[i + len + j] = u % MOD;
-        }
-#endif  // bitwiseAND
-
-#ifdef bitwiseOR
-        if (!inverse) {
-          p[i + j] = u + v;
-          p[i + len + j] = u;
-        } else {
-          p[i + j] = v;
-          p[i + len + j] = u - v;
-        }
-#endif  // bitwiseOR
-      }
-    }
-  }
-
-#ifdef bitwiseXOR
-  if (inverse) {
-    LL val = BigMod(n, MOD - 2);  // Option 2: Exclude
-    for (LL i = 0; i < n; i++) {
-      // assert(p[i]%n==0); //Option 2: Include
-      p[i] = (p[i] * val) % MOD;  // Option 2: p[i]/=n;
-    }
-  }
-#endif  // bitwiseXOR
-}
-\end{lstlisting}
-\subsection{Berlekamp Massey}
-\begin{lstlisting}
-struct berlekamp_massey { // for linear recursion
-  typedef long long LL;
-  static const int SZ = 2e5 + 5;
-  static const int MOD = 1e9 + 7; /// mod must be a prime
-  LL m , a[SZ] , h[SZ] , t_[SZ] , s[SZ] , t[SZ];
-  // bigmod goes here
-  inline vector <LL> BM( vector <LL> &x ) {
-    LL lf , ld;
-    vector <LL> ls , cur;
-    for ( int i = 0; i < int(x.size()); ++i ) {
-      LL t = 0;
-      for ( int j = 0; j < int(cur.size()); ++j ) t = (t + x[i - j - 1] * cur[j]) % MOD;
-      if ( (t - x[i]) % MOD == 0 ) continue;
-      if ( !cur.size() ) {
-        cur.resize( i + 1 );
-        lf = i; ld = (t - x[i]) % MOD;
-        continue;
-      }
-      LL k = -(x[i] - t) * bigmod( ld , MOD - 2 , MOD ) % MOD;
-      vector <LL> c(i - lf - 1);
-      c.push_back( k );
-      for ( int j = 0; j < int(ls.size()); ++j ) c.push_back(-ls[j] * k % MOD);
-      if ( c.size() < cur.size() ) c.resize( cur.size() );
-      for ( int j = 0; j < int(cur.size()); ++j ) c[j] = (c[j] + cur[j]) % MOD;
-      if (i - lf + (int)ls.size() >= (int)cur.size() ) ls = cur, lf = i, ld = (t - x[i]) % MOD;
-      cur = c;
-    }
-    for ( int i = 0; i < int(cur.size()); ++i ) cur[i] = (cur[i] % MOD + MOD) % MOD;
-    return cur;
-  }
-  inline void mull( LL *p , LL *q ) {
-    for ( int i = 0; i < m + m; ++i ) t_[i] = 0;
-    for ( int i = 0; i < m; ++i ) if ( p[i] )
-        for ( int j = 0; j < m; ++j ) t_[i + j] = (t_[i + j] + p[i] * q[j]) % MOD;
-    for ( int i = m + m - 1; i >= m; --i ) if ( t_[i] )
-        for ( int j = m - 1; ~j; --j ) t_[i - j - 1] = (t_[i - j - 1] + t_[i] * h[j]) % MOD;
-    for ( int i = 0; i < m; ++i ) p[i] = t_[i];
-  }
-  inline LL calc( LL K ) {
-    for ( int i = m; ~i; --i ) s[i] = t[i] = 0;
-    s[0] = 1; if ( m != 1 ) t[1] = 1; else t[0] = h[0];
-    while ( K ) {
-      if ( K & 1 ) mull( s , t );
-      mull( t , t ); K >>= 1;
-    }
-    LL su = 0;
-    for ( int i = 0; i < m; ++i ) su = (su + s[i] * a[i]) % MOD;
-    return (su % MOD + MOD) % MOD;
-  }
-  /// already calculated upto k , now calculate upto n.
-  inline vector <LL> process( vector <LL> &x , int n , int k ) {
-    auto re = BM( x );
-    x.resize( n + 1 );
-    for ( int i = k + 1; i <= n; i++ ) {
-      for ( int j = 0; j < re.size(); j++ ) {
-        x[i] += 1LL * x[i - j - 1] % MOD * re[j] % MOD; x[i] %= MOD;
-      }
-    }
-    return x;
-  }
-  inline LL work( vector <LL> &x , LL n ) {
-    if ( n < int(x.size()) ) return x[n] % MOD;
-    vector <LL> v = BM( x ); m = v.size(); if ( !m ) return 0;
-    for ( int i = 0; i < m; ++i ) h[i] = v[i], a[i] = x[i];
-    return calc( n ) % MOD;
-  }
-} rec;
-vector <LL> v;
-void solve() {
-  int n;
-  cin >> n;
-  cout << rec.work(v, n - 1) << endl;
-}
-
-\end{lstlisting}
-\subsection{Lagrange}
-\begin{lstlisting}
-// p is a polynomial with n points.
-// p(0), p(1), p(2), ... p(n-1) are given.
-// Find p(x).
-LL Lagrange(vector<LL> &p, LL x) {
-  LL n = p.size(), L, i, ret;
-  if (x < n) return p[x];
-  L = 1;
-  for (i = 1; i < n; i++) {
-    L = (L * (x - i)) % MOD;
-    L = (L * bigmod(MOD - i, MOD - 2)) % MOD;
-  }
-  ret = (L * p[0]) % MOD;
-  for (i = 1; i < n; i++) {
-    L = (L * (x - i + 1)) % MOD;
-    L = (L * bigmod(x - i, MOD - 2)) % MOD;
-    L = (L * bigmod(i, MOD - 2)) % MOD;
-    L = (L * (MOD + i - n)) % MOD;
-    ret = (ret + L * p[i]) % MOD;
-  }
-  return ret;
-}
-\end{lstlisting}
-\subsection{Shanks' Baby Step, Giant Step}
-\begin{lstlisting}
-// Finds a^x = b (mod p)
-
-LL bigmod(LL b, LL p, LL m) {}
-
-LL babyStepGiantStep(LL a, LL b, LL p) {
-  LL i, j, c, sq = sqrt(p);
-  map<LL, LL> babyTable;
-
-  for (j = 0, c = 1; j <= sq; j++, c = (c * a) % p) babyTable[c] = j;
-
-  LL giant = bigmod(a, sq * (p - 2), p);
-
-  for (i = 0, c = 1; i <= sq; i++, c = (c * giant) % p) {
-    if (babyTable.find((c * b) % p) != babyTable.end())
-      return i * sq + babyTable[(c * b) % p];
-  }
-
-  return -1;
-}
-\end{lstlisting}
-\subsection{Xor Basis}
-\begin{lstlisting}
-struct XorBasis {
-  static const int sz = 64;
-  array<ULL, sz> base = {0}, back;
-  array<int, sz> pos;
-  void insert(ULL x, int p) {
-    ULL cur = 0;
-    for (int i = sz - 1; ~i; i--)
-      if (x >> i & 1) {
-        if (!base[i]) {
-          base[i] = x, back[i] = cur, pos[i] = p;
-          break;
-        } else x ^= base[i], cur |= 1ULL << i;
-      }
-  }
-  pair<ULL, vector<int>> construct(ULL mask) {
-    ULL ok = 0, x = mask;
-    for (int i = sz - 1; ~i; i--)
-      if (mask >> i & 1 and base[i]) mask ^= base[i], ok |= 1ULL << i;
-    vector<int> ans;
-    for (int i = 0; i < sz; i++)
-      if (ok >> i & 1) {
-        ans.push_back(pos[i]);
-        ok ^= back[i];
-      }
-    return {x ^ mask, ans};
-  }
-};
-\end{lstlisting}
-\section{String}
-\subsection{Aho Corasick}
-\begin{lstlisting}
-struct AC {
-int N, P;
-const int A = 26;
-vector<vector<int>> next;
-vector<int> link, out_link;
-vector<vector<int>> out;
-AC() : N(0), P(0) { node(); }
-int node() {
-  next.emplace_back(A, 0);
-  link.emplace_back(0);
-  out_link.emplace_back(0);
-  out.emplace_back(0);
-  return N++;
-}
-inline int get(char c) { return c - 'a'; }
-int add_pattern(const string T) {
-  int u = 0;
-  for (auto c : T) {
-    if (!next[u][get(c)]) next[u][get(c)] = node();
-    u = next[u][get(c)];
-  }
-  out[u].push_back(P);
-  return P++;
-}
-void compute() {
-  queue<int> q;
-  for (q.push(0); !q.empty();) {
-    int u = q.front(); q.pop();
-    for (int c = 0; c < A; ++c) {
-      int v = next[u][c];
-      if (!v) next[u][c] = next[link[u]][c];
-      else {
-        link[v] = u ? next[link[u]][c] : 0;
-        out_link[v] = out[link[v]].empty() ? out_link[link[v]] : link[v];
-        q.push(v);
-      }
-    }
-  }
-}
-int advance(int u, char c) {
-  while (u && !next[u][get(c)]) u = link[u];
-  u = next[u][get(c)];
-  return u;
-}
-void match(const string S) {
-  int u = 0;
-  for (auto c : S) {
-    u = advance(u, c);
-    for (int v = u; v; v = out_link[v]) {
-      for (auto p : out[v]) cout << "match " << p << endl;
-    }
-  }
-}
-};
-int main() {
-  AC aho; int n; cin >> n;
-  while (n--) {
-    string s; cin >> s;
-    aho.add_pattern(s);
-  }
-  aho.compute(); string text;
-  cin >> text; aho.match(text);
-  return 0;
-}
-\end{lstlisting}
-\subsection{Double hash}
-\begin{lstlisting}
-// define +, -, * for (PLL, LL) and (PLL, PLL), % for (PLL, PLL);
-PLL base(1949313259, 1997293877);
-PLL mod(2091573227, 2117566807);
-
-PLL power(PLL a, LL p) {
-  PLL ans = PLL(1, 1);
-  for(; p; p >>= 1, a = a * a % mod) {
-      if(p & 1) ans = ans * a % mod;
-  }
-  return ans;
-}
-
-PLL inverse(PLL a) { return power(a, (mod.ff - 1) * (mod.ss - 1) - 1); }
-PLL inv_base = inverse(base);
-PLL val;
-vector<PLL> P;
-
-void hash_init(int n) {
-  P.resize(n + 1);
-  P[0] = PLL(1, 1);
-  for (int i = 1; i <= n; i++) P[i] = (P[i - 1] * base) % mod;
-}
-PLL append(PLL cur, char c) { return (cur * base + c) % mod; }
-/// prepends c to string with size k
-PLL prepend(PLL cur, int k, char c) { return (P[k] * c + cur) % mod; }
-/// replaces the i-th (0-indexed) character from right from a to b;
-PLL replace(PLL cur, int i, char a, char b) {
-  cur = (cur + P[i] * (b - a)) % mod;
-  return (cur + mod) % mod;
-}
-/// Erases c from the back of the string
-PLL pop_back(PLL hash, char c) {
-  return (((hash - c) * inv_base) % mod + mod) % mod;
-}
-/// Erases c from front of the string with size len
-PLL pop_front(PLL hash, int len, char c) {
-  return ((hash - P[len - 1] * c) % mod + mod) % mod;
-}
-/// concatenates two strings where length of the right is k
-PLL concat(PLL left, PLL right, int k) { return (left * P[k] + right) % mod; }
-/// Calculates hash of string with size len repeated cnt times
-/// This is O(log n). For O(1), pre-calculate inverses
-PLL repeat(PLL hash, int len, LL cnt) {
-  PLL mul = (P[len * cnt] - 1) * inverse(P[len] - 1);
-  mul = (mul % mod + mod) % mod;
-  PLL ret = (hash * mul) % mod;
-  if (P[len].ff == 1) ret.ff = hash.ff * cnt;
-  if (P[len].ss == 1) ret.ss = hash.ss * cnt;
-  return ret;
-}
-LL get(PLL hash) { return ((hash.ff << 32) ^ hash.ss); }
-struct hashlist {
-  int len;
-  vector<PLL> H, R;
-  hashlist() {}
-  hashlist(string& s) {
-    len = (int)s.size();
-    hash_init(len);
-    H.resize(len + 1, PLL(0, 0)), R.resize(len + 2, PLL(0, 0));
-    for (int i = 1; i <= len; i++) H[i] = append(H[i - 1], s[i - 1]);
-    for (int i = len; i >= 1; i--) R[i] = append(R[i + 1], s[i - 1]);
-  }
-  /// 1-indexed
-  PLL range_hash(int l, int r) {
-    return ((H[r] - H[l - 1] * P[r - l + 1]) % mod + mod) % mod;
-  }
-  PLL reverse_hash(int l, int r) {
-    return ((R[l] - R[r + 1] * P[r - l + 1]) % mod + mod) % mod;
-  }
-  PLL concat_range_hash(int l1, int r1, int l2, int r2) {
-    return concat(range_hash(l1, r1), range_hash(l2, r2), r2 - l2 + 1);
-  }
-  PLL concat_reverse_hash(int l1, int r1, int l2, int r2) {
-    return concat(reverse_hash(l2, r2), reverse_hash(l1, r1), r1 - l1 + 1);
-  }
-};
-\end{lstlisting}
-\subsection{Manacher's}
-\begin{lstlisting}
-vector<int> d1(n);
-// d[i] = number of palindromes taking s[i] as center
-for (int i = 0, l = 0, r = -1; i < n; i++) {
-  int k = (i > r) ? 1 : min(d1[l + r - i], r - i + 1);
-  while (0 <= i - k && i + k < n && s[i - k] == s[i + k]) k++;
-  d1[i] = k--;
-  if (i + k > r) l = i - k, r = i + k;
-}
-vector<int> d2(n);
-// d[i] = number of palindromes taking s[i-1] and s[i] as center
-for (int i = 0, l = 0, r = -1; i < n; i++) {
-  int k = (i > r) ? 0 : min(d2[l + r - i + 1], r - i + 1);
-  while (0 <= i - k - 1 && i + k < n && s[i - k - 1] == s[i + k]) k++;
-  d2[i] = k--;
-  if (i + k > r) l = i - k - 1, r = i + k;
-}
-\end{lstlisting}
-\subsection{Suffix Array}
-\begin{lstlisting}
-vector<VI> c;
-VI sort_cyclic_shifts(const string &s) {
-  int n = s.size();
-  const int alphabet = 256;
-  VI p(n), cnt(alphabet, 0);
-
-  c.clear();
-  c.emplace_back();
-  c[0].resize(n);
-
-  for (int i = 0; i < n; i++) cnt[s[i]]++;
-  for (int i = 1; i < alphabet; i++) cnt[i] += cnt[i - 1];
-  for (int i = 0; i < n; i++) p[--cnt[s[i]]] = i;
-
-  c[0][p[0]] = 0;
-  int classes = 1;
-
-  for (int i = 1; i < n; i++) {
-    if (s[p[i]] != s[p[i - 1]]) classes++;
-    c[0][p[i]] = classes - 1;
-  }
-
-  VI pn(n), cn(n);
-  cnt.resize(n);
-  for (int h = 0; (1 << h) < n; h++) {
-    for (int i = 0; i < n; i++) {
-      pn[i] = p[i] - (1 << h);
-      if (pn[i] < 0) pn[i] += n;
-    }
-    fill(cnt.begin(), cnt.end(), 0);
-    /// radix sort
-    for (int i = 0; i < n; i++) cnt[c[h][pn[i]]]++;
-    for (int i = 1; i < classes; i++) cnt[i] += cnt[i - 1];
-    for (int i = n - 1; i >= 0; i--) p[--cnt[c[h][pn[i]]]] = pn[i];
-
-    cn[p[0]] = 0;
-    classes = 1;
-
-    for (int i = 1; i < n; i++) {
-      PII cur = {c[h][p[i]], c[h][(p[i] + (1 << h)) % n]};
-      PII prev = {c[h][p[i - 1]], c[h][(p[i - 1] + (1 << h)) % n]};
-      if (cur != prev) ++classes;
-      cn[p[i]] = classes - 1;
-    }
-    c.push_back(cn);
-  }
-  return p;
-}
-VI suffix_array_construction(string s) {
-  s += "!";
-  VI sorted_shifts = sort_cyclic_shifts(s);
-  sorted_shifts.erase(sorted_shifts.begin());
-  return sorted_shifts;
-}
-/// LCP between the ith and jth (i != j) suffix of the STRING
-int suffixLCP(int i, int j) {
-  assert(i != j);
-  int log_n = c.size() - 1;
-
-  int ans = 0;
-  for (int k = log_n; k >= 0; k--) {
-    if (c[k][i] == c[k][j]) {
-      ans += 1 << k;
-      i += 1 << k;
-      j += 1 << k;
-    }
-  }
-  return ans;
-}
-
-VI lcp_construction(const string &s, const VI &sa) {
-  int n = s.size();
-  VI rank(n, 0);
-  VI lcp(n - 1, 0);
-
-  for (int i = 0; i < n; i++) rank[sa[i]] = i;
-
-  for (int i = 0, k = 0; i < n; i++, k -= (k != 0)) {
-    if (rank[i] == n - 1) {
-      k = 0;
-      continue;
-    }
-    int j = sa[rank[i] + 1];
-    while (i + k < n && j + k < n && s[i + k] == s[j + k]) k++;
-    lcp[rank[i]] = k;
-  }
-  return lcp;
-}
-\end{lstlisting}
-\subsection{Z Algo}
-\begin{lstlisting}
-vector<int> calcz(string s) {
-  int n = s.size();
-  vector<int> z(n);
-  int l = 0, r = 0;
-  for (int i = 1; i < n; i++) {
-    if (i > r) {
-      l = r = i;
-      while (r < n && s[r] == s[r - l]) r++;
-      z[i] = r - l, r--;
-    } else {
-      int k = i - l;
-      if (z[k] < r - i + 1) z[i] = z[k];
-      else {
-        l = i;
-        while (r < n && s[r] == s[r - l]) r++;
-        z[i] = r - l, r--;
-      }
-    }
-  }
-  return z;
-}
-\end{lstlisting}
-\section{DP}
-\subsection{1D-1D}
-\begin{lstlisting}
-/// Author: anachor
-
-#include <bits/stdc++.h>
-using namespace std;
-
-/// Solves dp[i] = min(dp[j] + cost(j+1, i)) given that cost() is QF
-long long solve1D(int n, long long cost(int, int)) {
-  vector<long long> dp(n + 1), opt(n + 1);
-  deque<pair<int, int>> dq;
-  dq.push_back({0, 1});
-  dp[0] = 0;
-
-  for (int i = 1; i <= n; i++) {
-    opt[i] = dq.front().first;
-    dp[i] = dp[opt[i]] + cost(opt[i] + 1, i);
-    if (i == n) break;
-
-    dq[0].second++;
-    if (dq.size() > 1 && dq[0].second == dq[1].second) dq.pop_front();
-
-    int en = n;
-    while (dq.size()) {
-      int o = dq.back().first, st = dq.back().second;
-      if (dp[o] + cost(o + 1, st) >= dp[i] + cost(i + 1, st))
-        dq.pop_back();
-      else {
-        int lo = st, hi = en;
-        while (lo < hi) {
-          int mid = (lo + hi + 1) / 2;
-          if (dp[o] + cost(o + 1, mid) < dp[i] + cost(i + 1, mid))
-            lo = mid;
-          else
-            hi = mid - 1;
-        }
-        if (lo < n) dq.push_back({i, lo + 1});
-        break;
-      }
-      en = st - 1;
-    }
-    if (dq.empty()) dq.push_back({i, i + 1});
-  }
-  return dp[n];
-}
-
-/// Solves https://open.kattis.com/problems/coveredwalkway
-const int N = 1e6 + 7;
-long long x[N];
-int c;
-long long cost(int l, int r) { return (x[r] - x[l]) * (x[r] - x[l]) + c; }
-
-int main() {
-  ios::sync_with_stdio(false);
-  cin.tie(0);
-
-  int n;
-  cin >> n >> c;
-  for (int i = 1; i <= n; i++) cin >> x[i];
-  cout << solve1D(n, cost) << endl;
-}
-\end{lstlisting}
-\subsection{Convex Hull Trick}
-\begin{lstlisting}
-struct line {
-  ll m, c;
-  line() {}
-  line(ll m, ll c) : m(m), c(c) {}
-};
-struct convex_hull_trick {
-  vector<line> lines;
-  int ptr = 0;
-  convex_hull_trick() {}
-  bool bad(line a, line b, line c) {
-    return 1.0 * (c.c - a.c) * (a.m - b.m) < 1.0 * (b.c - a.c) * (a.m - c.m);
-  }
-  void add(line L) {
-    int sz = lines.size();
-    while (sz >= 2 && bad(lines[sz - 2], lines[sz - 1], L)) {
-      lines.pop_back();
-      sz--;
-    }
-    lines.pb(L);
-  }
-  ll get(int idx, int x) { return (1ll * lines[idx].m * x + lines[idx].c); }
-  ll query(int x) {
-    if (lines.empty()) return 0;
-    if (ptr >= lines.size()) ptr = lines.size() - 1;
-    while (ptr < lines.size() - 1 && get(ptr, x) > get(ptr + 1, x)) ptr++;
-    return get(ptr, x);
-  }
-};
-ll sum[MAX];
-ll dp[MAX];
-int arr[MAX];
-int main() {
-  fastio;
-  int t;
-  cin >> t;
-  while (t--) {
-    int n, a, b, c;
-    cin >> n >> a >> b >> c;
-    for (int i = 1; i <= n; i++) cin >> sum[i];
-    for (int i = 1; i <= n; i++) dp[i] = 0, sum[i] += sum[i - 1];
-    convex_hull_trick cht;
-    cht.add(line(0, 0));
-    for (int pos = 1; pos <= n; pos++) {
-      dp[pos] = cht.query(sum[pos]) - 1ll * a * sqr(sum[pos]) - c;
-      cht.add(line(2ll * a * sum[pos], dp[pos] - a * sqr(sum[pos])));
-    }
-    ll ans = (-1ll * dp[n]);
-    ans += (1ll * sum[n] * b);
-    cout << ans << "\n";
-  }
-}
-\end{lstlisting}
-\subsection{Divide and Conquer dp}
-\begin{lstlisting}
-const int K = 805, N = 4005;
-LL dp[2][N], _cost[N][N];
-// 1-indexed for convenience
-LL cost(int l, int r) {
-  return _cost[r][r] - _cost[l - 1][r] - _cost[r][l - 1] + _cost[l - 1][l - 1] >> 1;
-}
-void compute(int cnt, int l, int r, int optl, int optr) {
-  if (l > r) return;
-  int mid = l + r >> 1;
-  LL best = INT_MAX;
-  int opt = -1;
-  for (int i = optl; i <= min(mid, optr); i++) {
-    LL cur = dp[cnt ^ 1][i - 1] + cost(i, mid);
-    if (cur < best) best = cur, opt = i;
-  }
-  dp[cnt][mid] = best;
-  compute(cnt, l, mid - 1, optl, opt);
-  compute(cnt, mid + 1, r, opt, optr);
-}
-LL dnc_dp(int k, int n) {
-  fill(dp[0] + 1, dp[0] + n + 1, INT_MAX);
-  for (int cnt = 1; cnt <= k; cnt++) {
-    compute(cnt & 1, 1, n, 1, n);
-  }
-  return dp[k & 1][n];
-}
-\end{lstlisting}
-\subsection{Dynamic CHT}
-\begin{lstlisting}
-typedef long long LL;
-
-const LL IS_QUERY = -(1LL << 62);
-
-struct line {
-  LL m, b;
-  mutable function <const line*()> succ;
-
-  bool operator < (const line &rhs) const {
-    if (rhs.b != IS_QUERY) return m < rhs.m;
-    const line *s = succ();
-    if (!s) return 0;
-    LL x = rhs.m;
-    return b - s -> b < (s -> m - m) * x;
-  }
-};
-
-struct HullDynamic : public multiset <line> { 
-  bool bad (iterator y) {
-    auto z = next(y);
-    if (y == begin()) {
-      if (z == end()) return 0;
-      return y -> m == z -> m && y -> b <= z -> b;
-    }
-    auto x = prev(y);
-    if (z == end()) return y -> m == x -> m && y -> b <= x -> b;
-    return 1.0 * (x -> b - y -> b) * (z -> m - y -> m) >= 1.0 * (y -> b - z -> b) * (y -> m - x -> m);
-  }
-
-  void insert_line (LL m, LL b) {
-    auto y = insert({m, b});
-    y -> succ = [=] {return next(y) == end() ? 0 : &*next(y);};
-    if (bad(y)) {erase(y); return;}
-    while (next(y) != end() && bad(next(y))) erase(next(y));
-    while (y != begin() && bad(prev(y))) erase(prev(y));
-  }
-
-  LL eval (LL x) {
-    auto l = *lower_bound((line) {x, IS_QUERY});
-    return l.m * x + l.b;
-  }
-};
-\end{lstlisting}
-\subsection{FFT Online}
-\begin{lstlisting}
-void fftOnline(vector <LL> &a, vector <LL> b) {
-  int n = a.size();
-  auto call = [&](int l, int r, auto &call){
-    if(l >= r) return;
-    int mid = l + r >> 1;
-    call(l, mid, call);
-
-    vector <LL> _a(a.begin() + l, a.begin() + mid + 1);
-    vector <LL> _b(b.begin(), b.begin() + (r - l + 1));
-    auto c = fft :: anyMod(_a, _b);
-
-    for(int i = mid + 1; i <= r; i++) {
-      a[i] += c[i - l];
-      a[i] -= (a[i] >= mod) * mod;
-    }
-    call(mid + 1, r, call);
-  };
-  call(0, n - 1, call);
-}
-
-\end{lstlisting}
-\subsection{Knuth optimization}
-\begin{lstlisting}
-const int N = 1005;
-LL dp[N][N], a[N];
-int opt[N][N];
-LL cost(int i, int j) { return a[j + 1] - a[i]; }
-LL knuth_optimization(int n) {
-  for (int i = 0; i < n; i++) {
-    dp[i][i] = 0;
-    opt[i][i] = i;
-  }
-  for (int i = n - 2; i >= 0; i--) {
-    for (int j = i + 1; j < n; j++) {
-      LL mn = LLONG_MAX;
-      LL c = cost(i, j);
-      for (int k = opt[i][j - 1]; k <= min(j - 1, opt[i + 1][j]); k++) {
-        if (mn > dp[i][k] + dp[k + 1][j] + c) {
-          mn = dp[i][k] + dp[k + 1][j] + c;
-          opt[i][j] = k;
-        }
-      }
-      dp[i][j] = mn;
-    }
-  }
-  return dp[0][n - 1];
-}
-\end{lstlisting}
-\subsection{Li Chao Tree}
-\begin{lstlisting}
-struct line {
-  LL m, c;
-  line(LL m = 0, LL c = 0) : m(m), c(c) {}
-};
-LL calc(line L, LL x) { return 1LL * L.m * x + L.c; }
-struct node {
-  LL m, c;
-  line L;
-  node *lft, *rt;
-  node(LL m = 0, LL c = 0, node *lft = NULL, node *rt = NULL)
-      : L(line(m, c)), lft(lft), rt(rt) {}
-};
-struct LiChao {
-  node *root;
-  LiChao() { root = new node(); }
-  void update(node *now, int L, int R, line newline) {
-    int mid = L + (R - L) / 2;
-    line lo = now->L, hi = newline;
-    if (calc(lo, L) > calc(hi, L)) swap(lo, hi);
-    if (calc(lo, R) <= calc(hi, R)) {
-      now->L = hi;
-      return;
-    }
-    if (calc(lo, mid) < calc(hi, mid)) {
-      now->L = hi;
-      if (now->rt == NULL) now->rt = new node();
-      update(now->rt, mid + 1, R, lo);
-    } else {
-      now->L = lo;
-      if (now->lft == NULL) now->lft = new node();
-      update(now->lft, L, mid, hi);
-    }
-  }
-  LL query(node *now, int L, int R, LL x) {
-    if (now == NULL) return -inf;
-    int mid = L + (R - L) / 2;
-    if (x <= mid)
-      return max(calc(now->L, x), query(now->lft, L, mid, x));
-    else
-      return max(calc(now->L, x), query(now->rt, mid + 1, R, x));
-  }
-};
 \end{lstlisting}
 \section{Geometry}
 \subsection{Point}
