@@ -1,4 +1,4 @@
-\newcommand\TEAM{IUT Songkolpo}
+\newcommand\TEAM{210042133}
 \newcommand\UNI{Islamic University of Technology}
 \newcommand\COLS{3}
 \newcommand\ORT{landscape}
@@ -403,6 +403,177 @@ LL query(LL now, LL curLeft, LL curRight, LL l, LL r, LL k) {
         LL mid = (curLeft + curRight) / 2;
         return query(2 * now, curLeft, mid, l, r, k) + query(2 * now + 1, mid + 1, curRight, l, r, k);
 }\end{lstlisting}
+\subsection{BIT2d}
+\begin{lstlisting}
+const int N = 1008;
+int bit[N][N], n, m;
+int a[N][N], q;
+void update(int x, int y, int val) {
+  for (; x < N; x += -x & x)
+    for (int j = y; j < N; j += -j & j) bit[x][j] += val;
+}
+int get(int x, int y) {
+  int ans = 0;
+  for (; x; x -= x & -x)
+    for (int j = y; j; j -= j & -j) ans += bit[x][j];
+  return ans;
+}
+int get(int x1, int y1, int x2, int y2) {
+  return get(x2, y2) - get(x1 - 1, y2) - get(x2, y1 - 1) + get(x1 - 1, y1 - 1);
+}
+\end{lstlisting}
+\subsection{SparseTable2d}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 505;
+const int LOGN = 9;
+
+// O(n^2 (logn)^2
+// Supports Rectangular Query
+int A[MAXN][MAXN];
+int M[MAXN][MAXN][LOGN][LOGN];
+
+void Build2DSparse(int N) {
+    for (int i = 1; i <= N; i++) {
+        for (int j = 1; j <= N; j++) {
+            M[i][j][0][0] = A[i][j];
+        }
+        for (int q = 1; (1 << q) <= N; q++) {
+            int add = 1 << (q - 1);
+            for (int j = 1; j + add <= N; j++) {
+                M[i][j][0][q] = max(M[i][j][0][q - 1], M[i][j + add][0][q - 1]);
+            }
+        }
+    }
+
+    for (int p = 1; (1 << p) <= N; p++) {
+        int add = 1 << (p - 1);
+        for (int i = 1; i + add <= N; i++) {
+            for (int q = 0; (1 << q) <= N; q++) {
+                for (int j = 1; j <= N; j++) {
+                    M[i][j][p][q] = max(M[i][j][p - 1][q], M[i + add][j][p - 1][q]);
+                }
+            }
+        }
+    }
+}
+
+// returns max of all A[i][j], where x1<=i<=x2 and y1<=j<=y2
+int Query(int x1, int y1, int x2, int y2) {
+    int kX = log2(x2 - x1 + 1);
+    int kY = log2(y2 - y1 + 1);
+    int addX = 1 << kX;
+    int addY = 1 << kY;
+
+    int ret1 = max(M[x1][y1][kX][kY], M[x1][y2 - addY + 1][kX][kY]);
+    int ret2 = max(M[x2 - addX + 1][y1][kX][kY],
+                                  M[x2 - addX + 1][y2 - addY + 1][kX][kY]);
+    return max(ret1, ret2);
+}
+\end{lstlisting}
+\subsection{SegmentTree}
+\begin{lstlisting}
+
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair<ll, ll>;
+
+const ll N=5e5+5, mod=998244353;
+
+using treenode = ll;
+using lazynode = pii;
+#define fir(a) for(int i=0; i<a; i++)
+
+treenode treeidn = 0;
+lazynode lazyidn = {1, 0};
+
+vector<ll> v(N);
+vector<treenode> tree(4*N, treeidn);
+vector<lazynode> lazy(4*N, lazyidn);
+
+treenode merge(treenode &a, treenode &b){
+  return ;//add merge function here
+}
+void lazyapply(treenode &to, ll l, ll r, lazynode &fr){
+  //apply lazy to treenode here
+}
+void lazymerge(lazynode &to, lazynode &fr){
+  //combine to lazy updates here
+}
+
+//-------dont touch: start
+void build(ll id, ll l, ll r){
+  if(l==r){
+    tree[id]=v[l];
+    return;
+  }
+  ll m=(l+r)/2;
+  build(id*2+1, l, m);
+  build(id*2+2, m+1, r);
+  tree[id] = merge(tree[id*2+1], tree[id*2+2]);
+}
+void push(ll id, ll l, ll r){
+  if(l-r){
+    ll m=(l+r)/2;
+    lazyapply(tree[2*id+1], l, m, lazy[id]);
+    lazymerge(lazy[2*id+1], lazy[id]);
+
+    lazyapply(tree[2*id+2], m+1, r, lazy[id]);
+    lazymerge(lazy[2*id+2], lazy[id]);
+
+    lazy[id]=lazyidn;
+  }
+}
+treenode query(ll id, ll l, ll r, ll ql, ll qr){
+  push(id, l, r);
+  if(ql<=l && r<=qr) return tree[id];
+  if(ql>r || qr<l) return treeidn;
+  
+  ll m=(l+r)/2;
+  treenode tl=query(id*2+1, l, m, ql, qr);
+  treenode tr=query(id*2+2, m+1, r, ql, qr);
+  return merge(tl, tr);
+}
+void update(ll id, ll l, ll r, ll ul, ll ur, lazynode uv){
+  push(id, l, r);
+  if(ul<=l && r<=ur){
+    lazyapply(tree[id], l, r, uv);
+    lazymerge(lazy[id], uv);
+    return;
+  }
+  if(ul>r || ur<l) return;
+  
+  ll m=(l+r)/2;
+  update(id*2+1, l, m, ul, ur, uv);
+  update(id*2+2, m+1, r, ul, ur, uv);
+  tree[id]=merge(tree[id*2+1], tree[id*2+2]);
+  return;
+}
+//--------dont touch: end
+
+void solve(){
+  ll n, q; cin>>n>>q;
+  fir(n) cin>>v[i];
+
+  build(0, 0, n-1);
+
+  while(q--){
+    ll t; cin>>t;
+    if(t){
+      ll l, r; cin>>l>>r;
+      cout<<query(0, 0, n-1, l, r-1)<<"\n";
+    }else{
+      ll l, r, a, b; cin>>l>>r>>a>>b;
+      update(0, 0, n-1, l, r-1, {a, b});
+    }
+  }
+  return;
+}
+\end{lstlisting}
 \section{Graph}
 \subsection{DSU BySize}
 \begin{lstlisting}
@@ -650,6 +821,62 @@ void preprocess(LL root) {
   up.assign(n, vector<LL>(l + 1));
   dfs(root, root);
 }\end{lstlisting}
+\subsection{EulerTourTree}
+\begin{lstlisting}
+
+using ll = long long;
+using vi = vector<ll>;
+using grid = vector<vi>;
+
+void et(grid &edg, ll at, ll pt, grid &tr, ll &id){
+  tr[0][id]=at; //val[at];
+  tr[1][at]=id++;
+
+  for(ll to: edg[at]) if(to-pt){
+    et(edg, to, at, tr, id);
+  }
+  tr[0][id]=at; //val[at];
+  tr[2][at]=id++;
+  return;
+}
+
+grid etour(grid &edg, ll rt){
+  ll cn=edg.size(), id=1;
+  grid tour={vi(2*cn, 0), vi(cn), vi(cn)};
+  et(edg, rt, 0, tour, id);
+  return tour;
+}
+\end{lstlisting}
+\subsection{BFS}
+\begin{lstlisting}
+
+ll bfs(grid &edg, ll sn){
+  ll cn=edg.size(), lv=-1, cl=0, nl=1, at, ls;
+  vi vst(cn+1, 0), prt(cn+1, -1);
+  queue<ll> call;
+  call.push(sn); vst[sn]++;
+  while(!call.empty()){
+    if(!cl){
+      lv++; cl=nl; nl=0;
+    }
+
+    at=call.front();
+    //if(at==en) return lv;
+    call.pop(); cl--; ls=at;
+    for(ll to:edg[at]){
+      if(!vst[to]){
+
+        prt[to]=at;
+        call.push(to);
+        vst[to]++;
+        nl++;
+      }
+    }
+  }
+  return 0;
+  //return ls; //for deepest.
+}
+\end{lstlisting}
 \section{String}
 \subsection{Hashing}
 \begin{lstlisting}
@@ -1500,6 +1727,33 @@ vector<LL> mul(vector<LL> p, vector<LL> q) {
   return c;
 }
 \end{lstlisting}
+\subsection{ModInverse}
+\begin{lstlisting}
+
+//solves ax+by=gcd(a, b) i guess
+int gcd(int a, int b, int& x, int& y) {
+  x = 1, y = 0;
+  int x1 = 0, y1 = 1, a1 = a, b1 = b;
+  while (b1) {
+    int q = a1 / b1;
+    tie(x, x1) = make_tuple(x1, x - q * x1);
+    tie(y, y1) = make_tuple(y1, y - q * y1);
+    tie(a1, b1) = make_tuple(b1, a1 - q * b1);
+  }
+  return a1;
+}
+
+//finds mod inverse?
+int x, y;
+int g = gcd(a, m, x, y);
+if (g != 1) {
+  cout << "No solution!";
+}
+else {
+  x = (x % m + m) % m;
+  cout << x << endl;
+}
+\end{lstlisting}
 \section{Geometry}
 \subsection{Point}
 \begin{lstlisting}
@@ -1774,49 +2028,54 @@ vector<Point> pointCircleTangencyPoints(Point p, Circle c) {
 // such that a[i] is on c1 && b[i] is c2 && for every i
 // Line(a[i], b[i]) is a tangent to both circles
 // CAUTION: a[i] = b[i] in case they touch | -1 for c1 = c2
-int circleCircleTangencyPoints(Circle c1, Circle c2, vector<Point> &a,
-                                                              vector<Point> &b) {
-    a.clear(), b.clear();
-    int cnt = 0;
-    if (dcmp(c1.r - c2.r) < 0) {
-        swap(c1, c2);
-        swap(a, b);
-    }
-    Tf d2 = sqLength(c1.o - c2.o);
-    Tf rdif = c1.r - c2.r, rsum = c1.r + c2.r;
-    if (dcmp(d2 - rdif * rdif) < 0) return 0;
-    if (dcmp(d2) == 0 && dcmp(c1.r - c2.r) == 0) return -1;
+int circleCircleTangencyPoints(Circle c1, Circle c2, vector<Point> &a, vector<Point> &b) {
+        a.clear(), b.clear();
+        int cnt = 0;
+        
+        if (dcmp(c1.r - c2.r) < 0) {
+                swap(c1, c2);
+                swap(a, b);
+        }
+        
+        Tf d2 = sqLength(c1.o - c2.o);
+        Tf rdif = c1.r - c2.r, rsum = c1.r + c2.r;
+        
+        if (dcmp(d2 - rdif * rdif) < 0) 
+                return 0;
+        if (dcmp(d2) == 0 && dcmp(c1.r - c2.r) == 0) 
+                return -1;
 
-    Tf base = angle(c2.o - c1.o);
-    if (dcmp(d2 - rdif * rdif) == 0) {
-        a.push_back(c1.point(base));
-        b.push_back(c2.point(base));
-        cnt++;
-        return cnt;
-    }
+        Tf base = angle(c2.o - c1.o);
+        
+        if (dcmp(d2 - rdif * rdif) == 0) {
+                a.push_back(c1.point(base));
+                b.push_back(c2.point(base));
+                cnt++;
+                return cnt;
+        }
 
-    Tf ang = acos((c1.r - c2.r) / sqrt(d2));
-    a.push_back(c1.point(base + ang));
-    b.push_back(c2.point(base + ang));
-    cnt++;
-    a.push_back(c1.point(base - ang));
-    b.push_back(c2.point(base - ang));
-    cnt++;
-
-    if (dcmp(d2 - rsum * rsum) == 0) {
-        a.push_back(c1.point(base));
-        b.push_back(c2.point(PI + base));
-        cnt++;
-    } else if (dcmp(d2 - rsum * rsum) > 0) {
-        Tf ang = acos((c1.r + c2.r) / sqrt(d2));
+        Tf ang = acos((c1.r - c2.r) / sqrt(d2));
         a.push_back(c1.point(base + ang));
-        b.push_back(c2.point(PI + base + ang));
+        b.push_back(c2.point(base + ang));
         cnt++;
         a.push_back(c1.point(base - ang));
-        b.push_back(c2.point(PI + base - ang));
+        b.push_back(c2.point(base - ang));
         cnt++;
-    }
-    return cnt;
+
+        if (dcmp(d2 - rsum * rsum) == 0) {
+                a.push_back(c1.point(base));
+                b.push_back(c2.point(PI + base));
+                cnt++;
+        } else if (dcmp(d2 - rsum * rsum) > 0) {
+                Tf ang = acos((c1.r + c2.r) / sqrt(d2));
+                a.push_back(c1.point(base + ang));
+                b.push_back(c2.point(PI + base + ang));
+                cnt++;
+                a.push_back(c1.point(base - ang));
+                b.push_back(c2.point(PI + base - ang));
+                cnt++;
+        }
+        return cnt;
 }
 \end{lstlisting}
 \subsection{Convex}
