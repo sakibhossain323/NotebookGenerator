@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.14.0 (TeX Live 2022/dev/Debian)  (format=lualatex 2024.3.2)  26 MAR 2024 00:29
+This is LuaHBTeX, Version 1.14.0 (TeX Live 2022/dev/Debian)  (format=lualatex 2024.3.2)  25 APR 2024 21:34
  restricted system commands enabled.
 **out.tex
 (./out.tex
@@ -776,7 +776,16 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
 
-[18] (./Extra/math.tex
+[18]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.0pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.0pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
+
+[19] (./Extra/math.tex
 
 Package amsmath Warning: Foreign command \atopwithdelims;
 (amsmath)                \frac or \genfrac should be used instead
@@ -815,22 +824,22 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
 
-[19]) (./out.aux)
+[20]) (./out.aux)
 Package rerunfilecheck Info: File `out.out' has not changed.
-(rerunfilecheck)             Checksum: 348C6CD0425B7BA977B95BC0DFFB1118;6859.
+(rerunfilecheck)             Checksum: 35E5A6A8DFB64D714A2ACD2D48B40DAE;7090.
 )
 
 Here is how much of LuaTeX's memory you used:
- 17351 strings out of 477805
- 1819550,794899 words of node,token memory allocated
+ 17570 strings out of 477805
+ 1819534,794899 words of node,token memory allocated
  586 words of node memory still in use:
    7 hlist, 2 vlist, 2 rule, 2 glue, 1 kern, 26 attribute, 59 glue_spec, 26 attr
 ibute_list, 1 write nodes
-   avail lists: 2:21505,3:1013,4:2376,5:45478,6:324,7:56836,8:303,9:91296,10:48,
-11:4810
- 35005 multiletter control sequences out of 65536+600000
+   avail lists: 1:1,2:21460,3:1047,4:2638,5:45506,6:321,7:58564,8:303,9:91290,10
+:48,11:4815
+ 35063 multiletter control sequences out of 65536+600000
  35 fonts using 1459567 bytes
- 60i,12n,65p,557b,1261s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,12n,65p,557b,1269s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc}{/usr/share/texmf/fonts/enc/dvips
 /lm/lm-ts1.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc}</usr/share/texl
 ive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/tex
@@ -845,10 +854,10 @@ hare/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public
 /lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/tex
 mf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr7.
 pfb></usr/share/texmf/fonts/type1/public/lm/lmtt9.pfb>
-Output written on out.pdf (20 pages, 385176 bytes).
+Output written on out.pdf (21 pages, 393648 bytes).
 
-PDF statistics: 2947 PDF objects out of 2984 (max. 8388607)
- 2881 compressed objects within 29 object streams
- 2454 named destinations out of 2487 (max. 131072)
- 497 words of extra memory for PDF output out of 10000 (max. 100000000)
+PDF statistics: 3127 PDF objects out of 3580 (max. 8388607)
+ 3058 compressed objects within 31 object streams
+ 2615 named destinations out of 2984 (max. 131072)
+ 513 words of extra memory for PDF output out of 10000 (max. 100000000)
 
