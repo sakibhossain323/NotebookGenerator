@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.14.0 (TeX Live 2022/dev/Debian)  (format=lualatex 2024.3.2)  25 APR 2024 21:34
+This is LuaHBTeX, Version 1.14.0 (TeX Live 2022/dev/Debian)  (format=lualatex 2024.4.25)  12 JUN 2024 19:08
  restricted system commands enabled.
 **out.tex
 (./out.tex
@@ -464,10 +464,6 @@ File: l3backend-luatex.def 2022-01-12 L3 backend support: PDF output (LuaTeX)
 \l__color_backend_stack_int=\count301
 \l__pdf_internal_box=\box100
 )
-
-LaTeX Warning: Unused global option(s):
-    [FSZ,onesided].
-
 (./out.aux)
 \openout1 = out.aux
 
@@ -785,7 +781,68 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
 
-[19] (./Extra/math.tex
+[19]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.0pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.0pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
+
+[20]
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.0pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.0pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
+
+[21]
+Overfull \hbox (26.3589pt too wide) in paragraph at lines 2641--2642
+[][] 
+ []
+
+
+Overfull \hbox (10.60895pt too wide) in paragraph at lines 2641--2642
+[][] 
+ []
+
+
+Overfull \hbox (10.60895pt too wide) in paragraph at lines 2641--2642
+[][] 
+ []
+
+
+Overfull \hbox (10.60895pt too wide) in paragraph at lines 2641--2642
+[][] 
+ []
+
+
+Overfull \hbox (21.10892pt too wide) in paragraph at lines 2641--2642
+[][] 
+ []
+
+
+Overfull \hbox (10.60895pt too wide) in paragraph at lines 2641--2642
+[][] 
+ []
+
+
+Overfull \hbox (5.35896pt too wide) in paragraph at lines 2641--2642
+[]  
+ []
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 14.0pt, for example:
+(fancyhdr)                \setlength{\headheight}{14.0pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
+
+(fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
+
+[22] (./Extra/math.tex
 
 Package amsmath Warning: Foreign command \atopwithdelims;
 (amsmath)                \frac or \genfrac should be used instead
@@ -824,22 +881,22 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-2.0pt}.
 
-[20]) (./out.aux)
+[23]) (./out.aux)
 Package rerunfilecheck Info: File `out.out' has not changed.
 (rerunfilecheck)             Checksum: 35E5A6A8DFB64D714A2ACD2D48B40DAE;7090.
 )
 
 Here is how much of LuaTeX's memory you used:
- 17570 strings out of 477805
- 1819534,794899 words of node,token memory allocated
+ 17567 strings out of 477805
+ 1455654,794899 words of node,token memory allocated
  586 words of node memory still in use:
    7 hlist, 2 vlist, 2 rule, 2 glue, 1 kern, 26 attribute, 59 glue_spec, 26 attr
 ibute_list, 1 write nodes
-   avail lists: 1:1,2:21460,3:1047,4:2638,5:45506,6:321,7:58564,8:303,9:91290,10
-:48,11:4815
- 35063 multiletter control sequences out of 65536+600000
- 35 fonts using 1459567 bytes
- 60i,12n,65p,557b,1269s stack positions out of 5000i,500n,10000p,200000b,80000s
+   avail lists: 1:1,2:19251,3:997,4:2428,5:40193,6:298,7:56581,8:279,9:80885,10:
+45,11:4225
+ 35060 multiletter control sequences out of 65536+600000
+ 34 fonts using 1418227 bytes
+ 60i,12n,65p,557b,1267s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc}{/usr/share/texmf/fonts/enc/dvips
 /lm/lm-ts1.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc}</usr/share/texl
 ive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/tex
@@ -853,11 +910,11 @@ mr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
 hare/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public
 /lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/tex
 mf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr7.
-pfb></usr/share/texmf/fonts/type1/public/lm/lmtt9.pfb>
-Output written on out.pdf (21 pages, 393648 bytes).
+pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb>
+Output written on out.pdf (24 pages, 397465 bytes).
 
-PDF statistics: 3127 PDF objects out of 3580 (max. 8388607)
- 3058 compressed objects within 31 object streams
+PDF statistics: 3136 PDF objects out of 3580 (max. 8388607)
+ 3064 compressed objects within 31 object streams
  2615 named destinations out of 2984 (max. 131072)
  513 words of extra memory for PDF output out of 10000 (max. 100000000)
 

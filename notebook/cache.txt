@@ -1,5 +1,5 @@
-IUT Pounopunik
+IUT TeamName
 Islamic University of Technology
 3
 landscape
-12
+10pt

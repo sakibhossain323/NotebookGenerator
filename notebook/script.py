@@ -68,9 +68,9 @@ def get_info():
     ort = "portrait" if x == 1 else "landscape"
     print("What font size?\n1. 10\n2. 11\n3. 12")
     x = int(input())
-    fs = '10'
-    if x == 2: fs = '11'
-    if x == 3: fs = '12'
+    fs = '10pt'
+    if x == 2: fs = '11pt'
+    if x == 3: fs = '12pt'
     return (team, uni,cols, ort, fs)
     
 def load():
