@@ -1,5 +1,5 @@
-IUT Songkolpo
+IUT TeamName
 Islamic University of Technology
 3
 landscape
-10
+10pt

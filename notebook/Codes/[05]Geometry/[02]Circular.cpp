@@ -112,47 +112,52 @@ vector<Point> pointCircleTangencyPoints(Point p, Circle c) {
 // such that a[i] is on c1 && b[i] is c2 && for every i
 // Line(a[i], b[i]) is a tangent to both circles
 // CAUTION: a[i] = b[i] in case they touch | -1 for c1 = c2
-int circleCircleTangencyPoints(Circle c1, Circle c2, vector<Point> &a,
-                               vector<Point> &b) {
-  a.clear(), b.clear();
-  int cnt = 0;
-  if (dcmp(c1.r - c2.r) < 0) {
-    swap(c1, c2);
-    swap(a, b);
-  }
-  Tf d2 = sqLength(c1.o - c2.o);
-  Tf rdif = c1.r - c2.r, rsum = c1.r + c2.r;
-  if (dcmp(d2 - rdif * rdif) < 0) return 0;
-  if (dcmp(d2) == 0 && dcmp(c1.r - c2.r) == 0) return -1;
+int circleCircleTangencyPoints(Circle c1, Circle c2, vector<Point> &a, vector<Point> &b) {
+    a.clear(), b.clear();
+    int cnt = 0;
+    
+    if (dcmp(c1.r - c2.r) < 0) {
+        swap(c1, c2);
+        swap(a, b);
+    }
+    
+    Tf d2 = sqLength(c1.o - c2.o);
+    Tf rdif = c1.r - c2.r, rsum = c1.r + c2.r;
+    
+    if (dcmp(d2 - rdif * rdif) < 0) 
+        return 0;
+    if (dcmp(d2) == 0 && dcmp(c1.r - c2.r) == 0) 
+        return -1;
 
-  Tf base = angle(c2.o - c1.o);
-  if (dcmp(d2 - rdif * rdif) == 0) {
-    a.push_back(c1.point(base));
-    b.push_back(c2.point(base));
-    cnt++;
-    return cnt;
-  }
+    Tf base = angle(c2.o - c1.o);
+    
+    if (dcmp(d2 - rdif * rdif) == 0) {
+        a.push_back(c1.point(base));
+        b.push_back(c2.point(base));
+        cnt++;
+        return cnt;
+    }
 
-  Tf ang = acos((c1.r - c2.r) / sqrt(d2));
-  a.push_back(c1.point(base + ang));
-  b.push_back(c2.point(base + ang));
-  cnt++;
-  a.push_back(c1.point(base - ang));
-  b.push_back(c2.point(base - ang));
-  cnt++;
-
-  if (dcmp(d2 - rsum * rsum) == 0) {
-    a.push_back(c1.point(base));
-    b.push_back(c2.point(PI + base));
-    cnt++;
-  } else if (dcmp(d2 - rsum * rsum) > 0) {
-    Tf ang = acos((c1.r + c2.r) / sqrt(d2));
+    Tf ang = acos((c1.r - c2.r) / sqrt(d2));
     a.push_back(c1.point(base + ang));
-    b.push_back(c2.point(PI + base + ang));
+    b.push_back(c2.point(base + ang));
     cnt++;
     a.push_back(c1.point(base - ang));
-    b.push_back(c2.point(PI + base - ang));
+    b.push_back(c2.point(base - ang));
     cnt++;
-  }
-  return cnt;
+
+    if (dcmp(d2 - rsum * rsum) == 0) {
+        a.push_back(c1.point(base));
+        b.push_back(c2.point(PI + base));
+        cnt++;
+    } else if (dcmp(d2 - rsum * rsum) > 0) {
+        Tf ang = acos((c1.r + c2.r) / sqrt(d2));
+        a.push_back(c1.point(base + ang));
+        b.push_back(c2.point(PI + base + ang));
+        cnt++;
+        a.push_back(c1.point(base - ang));
+        b.push_back(c2.point(PI + base - ang));
+        cnt++;
+    }
+    return cnt;
 }

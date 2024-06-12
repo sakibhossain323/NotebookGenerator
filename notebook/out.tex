@@ -1,9 +1,9 @@
-\newcommand\TEAM{IUT Songkolpo}
+\newcommand\TEAM{IUT TeamName}
 \newcommand\UNI{Islamic University of Technology}
 \newcommand\COLS{3}
 \newcommand\ORT{landscape}
-\newcommand\FSZ{10}
-\documentclass[FSZ,a4paper,onesided]{article}
+\newcommand\FSZ{10pt}
+\documentclass[\FSZ,a4paper,oneside]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{listings}
@@ -30,7 +30,7 @@
   belowskip=1mm,
   showstringspaces=false,
   columns=flexible,
-  basicstyle={\small\ttfamily},
+  basicstyle={\normalsize\ttfamily},
   numbers=none,
   numberstyle=\footnotesize\color{gray},
   keywordstyle=\color{blue},
@@ -403,6 +403,261 @@ LL query(LL now, LL curLeft, LL curRight, LL l, LL r, LL k) {
         LL mid = (curLeft + curRight) / 2;
         return query(2 * now, curLeft, mid, l, r, k) + query(2 * now + 1, mid + 1, curRight, l, r, k);
 }\end{lstlisting}
+\subsection{BIT2d}
+\begin{lstlisting}
+const int N = 1008;
+int bit[N][N], n, m;
+int a[N][N], q;
+void update(int x, int y, int val) {
+  for (; x < N; x += -x & x)
+    for (int j = y; j < N; j += -j & j) bit[x][j] += val;
+}
+int get(int x, int y) {
+  int ans = 0;
+  for (; x; x -= x & -x)
+    for (int j = y; j; j -= j & -j) ans += bit[x][j];
+  return ans;
+}
+int get(int x1, int y1, int x2, int y2) {
+  return get(x2, y2) - get(x1 - 1, y2) - get(x2, y1 - 1) + get(x1 - 1, y1 - 1);
+}
+\end{lstlisting}
+\subsection{SparseTable2d}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 505;
+const int LOGN = 9;
+
+// O(n^2 (logn)^2
+// Supports Rectangular Query
+int A[MAXN][MAXN];
+int M[MAXN][MAXN][LOGN][LOGN];
+
+void Build2DSparse(int N) {
+    for (int i = 1; i <= N; i++) {
+        for (int j = 1; j <= N; j++) {
+            M[i][j][0][0] = A[i][j];
+        }
+        for (int q = 1; (1 << q) <= N; q++) {
+            int add = 1 << (q - 1);
+            for (int j = 1; j + add <= N; j++) {
+                M[i][j][0][q] = max(M[i][j][0][q - 1], M[i][j + add][0][q - 1]);
+            }
+        }
+    }
+
+    for (int p = 1; (1 << p) <= N; p++) {
+        int add = 1 << (p - 1);
+        for (int i = 1; i + add <= N; i++) {
+            for (int q = 0; (1 << q) <= N; q++) {
+                for (int j = 1; j <= N; j++) {
+                    M[i][j][p][q] = max(M[i][j][p - 1][q], M[i + add][j][p - 1][q]);
+                }
+            }
+        }
+    }
+}
+
+// returns max of all A[i][j], where x1<=i<=x2 and y1<=j<=y2
+int Query(int x1, int y1, int x2, int y2) {
+    int kX = log2(x2 - x1 + 1);
+    int kY = log2(y2 - y1 + 1);
+    int addX = 1 << kX;
+    int addY = 1 << kY;
+
+    int ret1 = max(M[x1][y1][kX][kY], M[x1][y2 - addY + 1][kX][kY]);
+    int ret2 = max(M[x2 - addX + 1][y1][kX][kY],
+                                  M[x2 - addX + 1][y2 - addY + 1][kX][kY]);
+    return max(ret1, ret2);
+}
+\end{lstlisting}
+\subsection{SegmentTree}
+\begin{lstlisting}
+
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair<ll, ll>;
+
+const ll N=5e5+5, mod=998244353;
+
+using treenode = ll;
+using lazynode = pii;
+#define fir(a) for(int i=0; i<a; i++)
+
+treenode treeidn = 0;
+lazynode lazyidn = {1, 0};
+
+vector<ll> v(N);
+vector<treenode> tree(4*N, treeidn);
+vector<lazynode> lazy(4*N, lazyidn);
+
+treenode merge(treenode &a, treenode &b){
+  return ;//add merge function here
+}
+void lazyapply(treenode &to, ll l, ll r, lazynode &fr){
+  //apply lazy to treenode here
+}
+void lazymerge(lazynode &to, lazynode &fr){
+  //combine to lazy updates here
+}
+
+//-------dont touch: start
+void build(ll id, ll l, ll r){
+  if(l==r){
+    tree[id]=v[l];
+    return;
+  }
+  ll m=(l+r)/2;
+  build(id*2+1, l, m);
+  build(id*2+2, m+1, r);
+  tree[id] = merge(tree[id*2+1], tree[id*2+2]);
+}
+void push(ll id, ll l, ll r){
+  if(l-r){
+    ll m=(l+r)/2;
+    lazyapply(tree[2*id+1], l, m, lazy[id]);
+    lazymerge(lazy[2*id+1], lazy[id]);
+
+    lazyapply(tree[2*id+2], m+1, r, lazy[id]);
+    lazymerge(lazy[2*id+2], lazy[id]);
+
+    lazy[id]=lazyidn;
+  }
+}
+treenode query(ll id, ll l, ll r, ll ql, ll qr){
+  push(id, l, r);
+  if(ql<=l && r<=qr) return tree[id];
+  if(ql>r || qr<l) return treeidn;
+  
+  ll m=(l+r)/2;
+  treenode tl=query(id*2+1, l, m, ql, qr);
+  treenode tr=query(id*2+2, m+1, r, ql, qr);
+  return merge(tl, tr);
+}
+void update(ll id, ll l, ll r, ll ul, ll ur, lazynode uv){
+  push(id, l, r);
+  if(ul<=l && r<=ur){
+    lazyapply(tree[id], l, r, uv);
+    lazymerge(lazy[id], uv);
+    return;
+  }
+  if(ul>r || ur<l) return;
+  
+  ll m=(l+r)/2;
+  update(id*2+1, l, m, ul, ur, uv);
+  update(id*2+2, m+1, r, ul, ur, uv);
+  tree[id]=merge(tree[id*2+1], tree[id*2+2]);
+  return;
+}
+//--------dont touch: end
+
+void solve(){
+  ll n, q; cin>>n>>q;
+  fir(n) cin>>v[i];
+
+  build(0, 0, n-1);
+
+  while(q--){
+    ll t; cin>>t;
+    if(t){
+      ll l, r; cin>>l>>r;
+      cout<<query(0, 0, n-1, l, r-1)<<"\n";
+    }else{
+      ll l, r, a, b; cin>>l>>r>>a>>b;
+      update(0, 0, n-1, l, r-1, {a, b});
+    }
+  }
+  return;
+}
+\end{lstlisting}
+\subsection{SQRT Decomp}
+\begin{lstlisting}
+// input data
+int n;
+vector<int> a (n);
+// preprocessing
+int len = (int) sqrt (n + .0) + 1; // size of the block and the number of blocks
+vector<int> b (len);
+for (int i=0; i<n; ++i)
+        b[i / len] += a[i];
+// answering the queries
+for (;;) {
+        int l, r;
+    // read input data for the next query
+        int sum = 0;
+        for (int i=l; i<=r; )
+                if (i % len == 0 && i + len - 1 <= r) {
+                        // if the whole block starting at i belongs to [l, r]
+                        sum += b[i / len];
+                        i += len;
+                }
+                else {
+                        sum += a[i];
+                        ++i;
+                }
+}
+
+int sum = 0;
+int c_l = l / len,   c_r = r / len;
+if (c_l == c_r)
+        for (int i=l; i<=r; ++i)
+                sum += a[i];
+else {
+        for (int i=l, end=(c_l+1)*len-1; i<=end; ++i)
+                sum += a[i];
+        for (int i=c_l+1; i<=c_r-1; ++i)
+                sum += b[i];
+        for (int i=c_r*len; i<=r; ++i)
+                sum += a[i];
+}
+
+
+void remove(idx);  // TODO: remove value at idx from data structure
+void add(idx);     // TODO: add value at idx from data structure
+int get_answer();  // TODO: extract the current answer of the data structure
+int block_size;
+struct Query {
+        int l, r, idx;
+        bool operator<(Query other) const
+        {
+                return make_pair(l / block_size, r) <
+                              make_pair(other.l / block_size, other.r);
+        }
+};
+vector<int> mo_s_algorithm(vector<Query> queries) {
+        vector<int> answers(queries.size());
+        sort(queries.begin(), queries.end());
+
+        // TODO: initialize data structure
+
+        int cur_l = 0;
+        int cur_r = -1;
+        // invariant: data structure will always reflect the range [cur_l, cur_r]
+        for (Query q : queries) {
+                while (cur_l > q.l) {
+                        cur_l--;
+                        add(cur_l);
+                }
+                while (cur_r < q.r) {
+                        cur_r++;
+                        add(cur_r);
+                }
+                while (cur_l < q.l) {
+                        remove(cur_l);
+                        cur_l++;
+                }
+                while (cur_r > q.r) {
+                        remove(cur_r);
+                        cur_r--;
+                }
+                answers[q.idx] = get_answer();
+        }
+        return answers;
+}\end{lstlisting}
 \section{Graph}
 \subsection{DSU BySize}
 \begin{lstlisting}
@@ -650,6 +905,62 @@ void preprocess(LL root) {
   up.assign(n, vector<LL>(l + 1));
   dfs(root, root);
 }\end{lstlisting}
+\subsection{EulerTourTree}
+\begin{lstlisting}
+
+using ll = long long;
+using vi = vector<ll>;
+using grid = vector<vi>;
+
+void et(grid &edg, ll at, ll pt, grid &tr, ll &id){
+  tr[0][id]=at; //val[at];
+  tr[1][at]=id++;
+
+  for(ll to: edg[at]) if(to-pt){
+    et(edg, to, at, tr, id);
+  }
+  tr[0][id]=at; //val[at];
+  tr[2][at]=id++;
+  return;
+}
+
+grid etour(grid &edg, ll rt){
+  ll cn=edg.size(), id=1;
+  grid tour={vi(2*cn, 0), vi(cn), vi(cn)};
+  et(edg, rt, 0, tour, id);
+  return tour;
+}
+\end{lstlisting}
+\subsection{BFS}
+\begin{lstlisting}
+
+ll bfs(grid &edg, ll sn){
+  ll cn=edg.size(), lv=-1, cl=0, nl=1, at, ls;
+  vi vst(cn+1, 0), prt(cn+1, -1);
+  queue<ll> call;
+  call.push(sn); vst[sn]++;
+  while(!call.empty()){
+    if(!cl){
+      lv++; cl=nl; nl=0;
+    }
+
+    at=call.front();
+    //if(at==en) return lv;
+    call.pop(); cl--; ls=at;
+    for(ll to:edg[at]){
+      if(!vst[to]){
+
+        prt[to]=at;
+        call.push(to);
+        vst[to]++;
+        nl++;
+      }
+    }
+  }
+  return 0;
+  //return ls; //for deepest.
+}
+\end{lstlisting}
 \section{String}
 \subsection{Hashing}
 \begin{lstlisting}
@@ -1500,6 +1811,109 @@ vector<LL> mul(vector<LL> p, vector<LL> q) {
   return c;
 }
 \end{lstlisting}
+\subsection{ModInverse}
+\begin{lstlisting}
+
+//solves ax+by=gcd(a, b) i guess
+int gcd(int a, int b, int& x, int& y) {
+  x = 1, y = 0;
+  int x1 = 0, y1 = 1, a1 = a, b1 = b;
+  while (b1) {
+    int q = a1 / b1;
+    tie(x, x1) = make_tuple(x1, x - q * x1);
+    tie(y, y1) = make_tuple(y1, y - q * y1);
+    tie(a1, b1) = make_tuple(b1, a1 - q * b1);
+  }
+  return a1;
+}
+
+//finds mod inverse?
+int x, y;
+int g = gcd(a, m, x, y);
+if (g != 1) {
+  cout << "No solution!";
+}
+else {
+  x = (x % m + m) % m;
+  cout << x << endl;
+}
+\end{lstlisting}
+\subsection{Diophantine}
+\begin{lstlisting}
+int gcd(int a, int b, int& x, int& y) {
+  if (b == 0) {
+    x = 1;
+    y = 0;
+    return a;
+  }
+  int x1, y1;
+  int d = gcd(b, a % b, x1, y1);
+  x = y1;
+  y = x1 - y1 * (a / b);
+  return d;
+}
+
+bool find_any_solution(int a, int b, int c, int &x0, int &y0, int &g) {
+  g = gcd(abs(a), abs(b), x0, y0);
+  if (c % g) {
+    return false;
+  }
+
+  x0 *= c / g;
+  y0 *= c / g;
+  if (a < 0) x0 = -x0;
+  if (b < 0) y0 = -y0;
+  return true;
+}
+
+void shift_solution(int & x, int & y, int a, int b, int cnt) {
+  x += cnt * b;
+  y -= cnt * a;
+}
+
+int find_all_solutions(int a, int b, int c, int minx, int maxx, int miny, int maxy) {
+  int x, y, g;
+  if (!find_any_solution(a, b, c, x, y, g))
+    return 0;
+  a /= g;
+  b /= g;
+
+  int sign_a = a > 0 ? +1 : -1;
+  int sign_b = b > 0 ? +1 : -1;
+
+  shift_solution(x, y, a, b, (minx - x) / b);
+  if (x < minx)
+    shift_solution(x, y, a, b, sign_b);
+  if (x > maxx)
+    return 0;
+  int lx1 = x;
+
+  shift_solution(x, y, a, b, (maxx - x) / b);
+  if (x > maxx)
+    shift_solution(x, y, a, b, -sign_b);
+  int rx1 = x;
+
+  shift_solution(x, y, a, b, -(miny - y) / a);
+  if (y < miny)
+    shift_solution(x, y, a, b, -sign_a);
+  if (y > maxy)
+    return 0;
+  int lx2 = x;
+
+  shift_solution(x, y, a, b, -(maxy - y) / a);
+  if (y > maxy)
+    shift_solution(x, y, a, b, sign_a);
+  int rx2 = x;
+
+  if (lx2 > rx2)
+    swap(lx2, rx2);
+  int lx = max(lx1, lx2);
+  int rx = min(rx1, rx2);
+
+  if (lx > rx)
+    return 0;
+  return (rx - lx) / abs(b) + 1;
+}\end{lstlisting}
 \section{Geometry}
 \subsection{Point}
 \begin{lstlisting}
@@ -1774,49 +2188,54 @@ vector<Point> pointCircleTangencyPoints(Point p, Circle c) {
 // such that a[i] is on c1 && b[i] is c2 && for every i
 // Line(a[i], b[i]) is a tangent to both circles
 // CAUTION: a[i] = b[i] in case they touch | -1 for c1 = c2
-int circleCircleTangencyPoints(Circle c1, Circle c2, vector<Point> &a,
-                                                              vector<Point> &b) {
-    a.clear(), b.clear();
-    int cnt = 0;
-    if (dcmp(c1.r - c2.r) < 0) {
-        swap(c1, c2);
-        swap(a, b);
-    }
-    Tf d2 = sqLength(c1.o - c2.o);
-    Tf rdif = c1.r - c2.r, rsum = c1.r + c2.r;
-    if (dcmp(d2 - rdif * rdif) < 0) return 0;
-    if (dcmp(d2) == 0 && dcmp(c1.r - c2.r) == 0) return -1;
+int circleCircleTangencyPoints(Circle c1, Circle c2, vector<Point> &a, vector<Point> &b) {
+        a.clear(), b.clear();
+        int cnt = 0;
+        
+        if (dcmp(c1.r - c2.r) < 0) {
+                swap(c1, c2);
+                swap(a, b);
+        }
+        
+        Tf d2 = sqLength(c1.o - c2.o);
+        Tf rdif = c1.r - c2.r, rsum = c1.r + c2.r;
+        
+        if (dcmp(d2 - rdif * rdif) < 0) 
+                return 0;
+        if (dcmp(d2) == 0 && dcmp(c1.r - c2.r) == 0) 
+                return -1;
 
-    Tf base = angle(c2.o - c1.o);
-    if (dcmp(d2 - rdif * rdif) == 0) {
-        a.push_back(c1.point(base));
-        b.push_back(c2.point(base));
-        cnt++;
-        return cnt;
-    }
+        Tf base = angle(c2.o - c1.o);
+        
+        if (dcmp(d2 - rdif * rdif) == 0) {
+                a.push_back(c1.point(base));
+                b.push_back(c2.point(base));
+                cnt++;
+                return cnt;
+        }
 
-    Tf ang = acos((c1.r - c2.r) / sqrt(d2));
-    a.push_back(c1.point(base + ang));
-    b.push_back(c2.point(base + ang));
-    cnt++;
-    a.push_back(c1.point(base - ang));
-    b.push_back(c2.point(base - ang));
-    cnt++;
-
-    if (dcmp(d2 - rsum * rsum) == 0) {
-        a.push_back(c1.point(base));
-        b.push_back(c2.point(PI + base));
-        cnt++;
-    } else if (dcmp(d2 - rsum * rsum) > 0) {
-        Tf ang = acos((c1.r + c2.r) / sqrt(d2));
+        Tf ang = acos((c1.r - c2.r) / sqrt(d2));
         a.push_back(c1.point(base + ang));
-        b.push_back(c2.point(PI + base + ang));
+        b.push_back(c2.point(base + ang));
         cnt++;
         a.push_back(c1.point(base - ang));
-        b.push_back(c2.point(PI + base - ang));
+        b.push_back(c2.point(base - ang));
         cnt++;
-    }
-    return cnt;
+
+        if (dcmp(d2 - rsum * rsum) == 0) {
+                a.push_back(c1.point(base));
+                b.push_back(c2.point(PI + base));
+                cnt++;
+        } else if (dcmp(d2 - rsum * rsum) > 0) {
+                Tf ang = acos((c1.r + c2.r) / sqrt(d2));
+                a.push_back(c1.point(base + ang));
+                b.push_back(c2.point(PI + base + ang));
+                cnt++;
+                a.push_back(c1.point(base - ang));
+                b.push_back(c2.point(PI + base - ang));
+                cnt++;
+        }
+        return cnt;
 }
 \end{lstlisting}
 \subsection{Convex}
